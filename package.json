@@ -1,0 +1,12 @@
+{
+    "name": "d365-webresources-unit-tests",
+    "version": "1.0.0",
+    "description": "Unit tests for D365 CRM Web Resources",
+    "scripts": {
+        "test": "jest --verbose --coverage",
+        "test:watch": "jest --watch"
+    },
+    "devDependencies": {
+        "jest": "^30.3.0"
+    }
+}
