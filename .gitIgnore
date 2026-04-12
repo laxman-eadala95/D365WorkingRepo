@@ -1,0 +1,20 @@
+# Node
+node_modules/
+coverage/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+packages/
+TestResults/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vs/
+*.swp
