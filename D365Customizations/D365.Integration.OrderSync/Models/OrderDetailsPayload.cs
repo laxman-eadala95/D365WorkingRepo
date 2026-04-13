@@ -3,19 +3,13 @@ using System;
 namespace D365.Integration.OrderSync.Models
 {
     /// <summary>
-    /// JSON payload sent to the external order API (maps from <c>salesorder</c>).
+    /// Payload sent to the external order API. Mapped from the salesorder entity.
     /// </summary>
-    public sealed class OrderDetailsPayload
+    public class OrderDetailsPayload
     {
         public Guid? SalesOrderId { get; set; }
-
-        /// <summary>
-        /// Mapped from order <c>name</c> (assessment: customer-facing label on the order record).
-        /// </summary>
         public string CustomerName { get; set; }
-
         public decimal? OrderTotal { get; set; }
-
         public DateTime? OrderDate { get; set; }
     }
 }

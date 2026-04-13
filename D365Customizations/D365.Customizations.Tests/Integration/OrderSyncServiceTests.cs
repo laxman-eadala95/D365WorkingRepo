@@ -12,19 +12,21 @@ namespace D365.Customizations.Tests.Integration
     public class OrderSyncServiceTests
     {
         [Fact]
-        public async Task TC_I07_NoOrders_LogsOnly()
+        public async Task NoOrders_LogsNoWorkMessage()
         {
-            var repo = new MockOrderRepository(new List<Entity>());
+            var repo = new StubOrderRepository(new List<Entity>());
             var api = new MockExternalApiClient(true);
             var logs = new List<string>();
-            var s = new OrderSyncService(repo, api, logs.Add);
-            await s.SyncNewOrdersAsync(DateTime.UtcNow).ConfigureAwait(false);
+
+            var sync = new OrderSyncService(repo, api, logs.Add);
+            await sync.SyncNewOrdersAsync(DateTime.UtcNow);
+
             Assert.Single(logs);
             Assert.Contains("No orders found", logs[0]);
         }
 
         [Fact]
-        public async Task TC_I01_SuccessPath()
+        public async Task ValidOrder_LogsSuccess()
         {
             var order = new Entity(OrderConstants.EntityLogicalName, Guid.NewGuid())
             {
@@ -32,43 +34,46 @@ namespace D365.Customizations.Tests.Integration
                 [OrderConstants.AttributeTotalAmount] = new Money(10m),
                 [OrderConstants.AttributeCreatedOn] = DateTime.UtcNow
             };
-            var repo = new MockOrderRepository(new List<Entity> { order });
+
+            var repo = new StubOrderRepository(new List<Entity> { order });
             var api = new MockExternalApiClient(true);
             var logs = new List<string>();
-            var s = new OrderSyncService(repo, api, logs.Add);
-            await s.SyncNewOrdersAsync(DateTime.UtcNow.AddDays(-1)).ConfigureAwait(false);
+
+            var sync = new OrderSyncService(repo, api, logs.Add);
+            await sync.SyncNewOrdersAsync(DateTime.UtcNow.AddDays(-1));
+
             Assert.Contains("SUCCESS", logs[0]);
         }
 
         [Fact]
-        public void TC_I02_PayloadMapping()
+        public void MapToPayload_MapsFieldsCorrectly()
         {
             var id = Guid.NewGuid();
             var order = new Entity(OrderConstants.EntityLogicalName, id)
             {
-                [OrderConstants.AttributeName] = "N",
-                [OrderConstants.AttributeTotalAmount] = new Money(5m),
-                [OrderConstants.AttributeCreatedOn] = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc)
+                [OrderConstants.AttributeName] = "Test",
+                [OrderConstants.AttributeTotalAmount] = new Money(42m),
+                [OrderConstants.AttributeCreatedOn] = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc)
             };
-            var p = OrderSyncService.MapToPayload(order);
-            Assert.Equal("N", p.CustomerName);
-            Assert.Equal(5m, p.OrderTotal);
-            Assert.Equal(new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc), p.OrderDate);
+
+            var payload = OrderSyncService.MapToPayload(order);
+
+            Assert.Equal("Test", payload.CustomerName);
+            Assert.Equal(42m, payload.OrderTotal);
+            Assert.Equal(new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc), payload.OrderDate);
         }
 
-        private sealed class MockOrderRepository : IOrderRepository
+        // Simple stub for tests - just returns what you give it
+        private class StubOrderRepository : IOrderRepository
         {
-            private readonly IList<Entity> _entities;
+            private readonly IList<Entity> _orders;
 
-            public MockOrderRepository(IList<Entity> entities)
+            public StubOrderRepository(IList<Entity> orders)
             {
-                _entities = entities;
+                _orders = orders;
             }
 
-            public IList<Entity> GetOrdersCreatedSince(DateTime since)
-            {
-                return _entities;
-            }
+            public IList<Entity> GetOrdersCreatedSince(DateTime since) => _orders;
         }
     }
 }

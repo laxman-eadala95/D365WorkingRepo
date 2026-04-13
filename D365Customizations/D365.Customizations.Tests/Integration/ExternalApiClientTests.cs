@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -11,37 +12,41 @@ namespace D365.Customizations.Tests.Integration
     public class ExternalApiClientTests
     {
         [Fact]
-        public async Task TC_I09_Http200_Success()
+        public async Task Http200_ReturnsSuccess()
         {
             var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-            var http = new HttpClient(handler);
-            var client = new ExternalApiClient(http, "https://example.test/api/orders");
-            var r = await client.SendOrderAsync(new OrderDetailsPayload()).ConfigureAwait(false);
-            Assert.True(r.IsSuccess);
-            Assert.Equal(200, r.StatusCode);
+            var client = new ExternalApiClient(new HttpClient(handler), "https://test/api/orders");
+
+            var result = await client.SendOrderAsync(new OrderDetailsPayload());
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(200, result.StatusCode);
         }
 
         [Fact]
-        public async Task TC_I10_Http500_Failure()
+        public async Task Http500_ReturnsFailure()
         {
             var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
-            var http = new HttpClient(handler);
-            var client = new ExternalApiClient(http, "https://example.test/api/orders");
-            var r = await client.SendOrderAsync(new OrderDetailsPayload()).ConfigureAwait(false);
-            Assert.False(r.IsSuccess);
-            Assert.Equal(500, r.StatusCode);
+            var client = new ExternalApiClient(new HttpClient(handler), "https://test/api/orders");
+
+            var result = await client.SendOrderAsync(new OrderDetailsPayload());
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(500, result.StatusCode);
         }
 
-        private sealed class StubHandler : HttpMessageHandler
+        // Returns a canned HTTP response for testing
+        private class StubHandler : HttpMessageHandler
         {
-            private readonly System.Func<HttpRequestMessage, HttpResponseMessage> _respond;
+            private readonly Func<HttpRequestMessage, HttpResponseMessage> _respond;
 
-            public StubHandler(System.Func<HttpRequestMessage, HttpResponseMessage> respond)
+            public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond)
             {
                 _respond = respond;
             }
 
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 return Task.FromResult(_respond(request));
             }

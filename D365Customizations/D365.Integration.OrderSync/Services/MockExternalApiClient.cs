@@ -4,9 +4,9 @@ using D365.Integration.OrderSync.Models;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// In-process mock for demos and tests (no network).
+    /// Returns canned responses without making any HTTP calls. For demos and tests.
     /// </summary>
-    public sealed class MockExternalApiClient : IExternalApiClient
+    public class MockExternalApiClient : IExternalApiClient
     {
         private readonly bool _succeed;
 
@@ -15,12 +15,12 @@ namespace D365.Integration.OrderSync.Services
             _succeed = succeed;
         }
 
-        /// <inheritdoc />
         public Task<ApiResponse> SendOrderAsync(OrderDetailsPayload payload)
         {
             var response = _succeed
-                ? new ApiResponse { IsSuccess = true, StatusCode = 200, ErrorMessage = null }
+                ? new ApiResponse { IsSuccess = true, StatusCode = 200 }
                 : new ApiResponse { IsSuccess = false, StatusCode = 500, ErrorMessage = "Mock failure" };
+
             return Task.FromResult(response);
         }
     }

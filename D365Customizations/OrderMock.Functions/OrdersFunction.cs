@@ -4,54 +4,51 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
-namespace OrderMock.Functions;
-
-/// <summary>
-/// HTTP mock for D365 order sync: accepts the same JSON shape as <c>D365.Integration.OrderSync</c> POSTs.
-/// Deploy to Azure Functions; locally: <c>func start</c> → typically <c>http://localhost:7071/api/orders</c>.
-/// </summary>
-public sealed class OrdersFunction
+namespace OrderMock.Functions
 {
-    private readonly ILogger<OrdersFunction> _logger;
-
-    public OrdersFunction(ILogger<OrdersFunction> logger)
+    /// <summary>
+    /// Mock REST endpoint that accepts order payloads and logs them.
+    /// Locally: func start -> POST http://localhost:7071/api/orders
+    /// </summary>
+    public class OrdersFunction
     {
-        _logger = logger;
-    }
+        private readonly ILogger<OrdersFunction> _logger;
 
-    [Function("Orders")]
-    public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "orders")] HttpRequestData req)
-    {
-        string body;
-        using (var reader = new StreamReader(req.Body))
+        public OrdersFunction(ILogger<OrdersFunction> logger)
         {
-            body = await reader.ReadToEndAsync().ConfigureAwait(false);
+            _logger = logger;
         }
 
-        try
+        [Function("Orders")]
+        public async Task<HttpResponseData> Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "orders")] HttpRequestData req)
         {
-            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
-            var root = doc.RootElement;
-            var customer = root.TryGetProperty("CustomerName", out var cn) ? cn.ToString() : null;
-            var total = root.TryGetProperty("OrderTotal", out var ot) ? ot.ToString() : null;
-            _logger.LogInformation(
-                "Mock order API received payload. CustomerName={CustomerName} OrderTotal={OrderTotal}",
-                customer,
-                total);
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogWarning(ex, "Could not parse JSON body; logging raw length {Length}", body?.Length ?? 0);
-        }
+            string body;
+            using (var reader = new StreamReader(req.Body))
+            {
+                body = await reader.ReadToEndAsync();
+            }
 
-        var ok = req.CreateResponse(HttpStatusCode.OK);
-        ok.Headers.Add("Content-Type", "application/json; charset=utf-8");
-        await using (var writer = new StreamWriter(ok.Body, leaveOpen: true))
-        {
-            await writer.WriteAsync("{\"status\":\"received\"}").ConfigureAwait(false);
-        }
+            // Try to parse and log the order details
+            try
+            {
+                using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+                var root = doc.RootElement;
 
-        return ok;
+                var customer = root.TryGetProperty("CustomerName", out var cn) ? cn.ToString() : "(unknown)";
+                var total = root.TryGetProperty("OrderTotal", out var ot) ? ot.ToString() : "(unknown)";
+
+                _logger.LogInformation("Received order: CustomerName={Customer}, OrderTotal={Total}", customer, total);
+            }
+            catch (JsonException)
+            {
+                _logger.LogWarning("Could not parse order JSON. Raw length: {Length}", body?.Length ?? 0);
+            }
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json");
+            await response.WriteStringAsync("{\"status\":\"received\"}");
+            return response;
+        }
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -6,23 +5,24 @@ using Microsoft.Xrm.Sdk.Query;
 namespace CustomPlugins.Services
 {
     /// <summary>
-    /// Uses a narrow query (TopCount = 1, single column) for scalable duplicate detection.
+    /// Checks whether a contact with the given email already exists in D365.
+    /// Uses TopCount = 1 and a single-column ColumnSet for performance at scale.
     /// </summary>
-    public sealed class DuplicateContactValidator : IDuplicateContactValidator
+    public class DuplicateContactValidator : IDuplicateContactValidator
     {
         private readonly IOrganizationService _service;
 
         public DuplicateContactValidator(IOrganizationService service)
         {
-            _service = service ?? throw new ArgumentNullException(nameof(service));
+            _service = service;
         }
 
-        /// <inheritdoc />
         public bool EmailExists(string email)
         {
             var query = new QueryExpression(ContactConstants.EntityLogicalName)
             {
                 ColumnSet = new ColumnSet(ContactConstants.AttributeContactId),
+                TopCount = 1,
                 Criteria = new FilterExpression
                 {
                     Conditions =
@@ -32,26 +32,20 @@ namespace CustomPlugins.Services
                             ConditionOperator.Equal,
                             email)
                     }
-                },
-                TopCount = 1
+                }
             };
 
             var results = _service.RetrieveMultiple(query);
             return results.Entities.Count > 0;
         }
 
-        /// <inheritdoc />
         public void ValidateNoDuplicateEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-            {
                 return;
-            }
 
             if (EmailExists(email))
-            {
                 throw new InvalidPluginExecutionException(ContactConstants.DuplicateEmailMessage);
-            }
         }
     }
 }

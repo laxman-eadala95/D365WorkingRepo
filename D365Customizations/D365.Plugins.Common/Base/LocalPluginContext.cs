@@ -3,10 +3,16 @@ using Microsoft.Xrm.Sdk;
 namespace D365.Plugins.Common.Base
 {
     /// <summary>
-    /// Bundles services and the pipeline target for plugin business logic.
+    /// Bundles the pipeline services and target entity into a single object
+    /// so plugin subclasses don't have to repeat the extraction boilerplate.
     /// </summary>
-    public sealed class LocalPluginContext
+    public class LocalPluginContext
     {
+        public IPluginExecutionContext Context { get; }
+        public IOrganizationService Service { get; }
+        public ITracingService TracingService { get; }
+        public Entity Target { get; }
+
         public LocalPluginContext(
             IPluginExecutionContext context,
             IOrganizationService service,
@@ -18,13 +24,5 @@ namespace D365.Plugins.Common.Base
             TracingService = tracingService;
             Target = target;
         }
-
-        public IPluginExecutionContext Context { get; }
-
-        public IOrganizationService Service { get; }
-
-        public ITracingService TracingService { get; }
-
-        public Entity Target { get; }
     }
 }

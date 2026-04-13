@@ -1,14 +1,12 @@
 namespace D365.Integration.OrderSync.Models
 {
     /// <summary>
-    /// Normalized HTTP outcome for logging and branching.
+    /// Simple result object for API call outcomes.
     /// </summary>
-    public sealed class ApiResponse
+    public class ApiResponse
     {
         public bool IsSuccess { get; set; }
-
         public int StatusCode { get; set; }
-
         public string ErrorMessage { get; set; }
     }
 }

@@ -5,20 +5,19 @@ using Microsoft.Xrm.Sdk;
 namespace CustomPlugins.Services
 {
     /// <summary>
-    /// Creates and persists the child contact; traces success for operations visibility.
+    /// Creates a child contact linked to an account and writes a trace log on success.
     /// </summary>
-    public sealed class ChildContactService : IChildContactService
+    public class ChildContactService : IChildContactService
     {
         private readonly IOrganizationService _service;
         private readonly ITracingService _tracing;
 
         public ChildContactService(IOrganizationService service, ITracingService tracing)
         {
-            _service = service ?? throw new ArgumentNullException(nameof(service));
-            _tracing = tracing ?? throw new ArgumentNullException(nameof(tracing));
+            _service = service;
+            _tracing = tracing;
         }
 
-        /// <inheritdoc />
         public Guid CreateChildContact(Guid accountId, string accountName)
         {
             var contact = new Entity(ContactConstants.EntityLogicalName)
@@ -26,13 +25,14 @@ namespace CustomPlugins.Services
                 [ContactConstants.AttributeFirstName] = ContactConstants.DefaultFirstName,
                 [ContactConstants.AttributeLastName] = accountName,
                 [ContactConstants.AttributeParentCustomerId] = new EntityReference(
-                    AccountConstants.EntityLogicalName,
-                    accountId)
+                    AccountConstants.EntityLogicalName, accountId)
             };
 
             var contactId = _service.Create(contact);
-            _tracing.Trace(
-                $"Child contact created for account '{accountName ?? "(null)"}' (account id: {accountId}, contact id: {contactId}).");
+
+            _tracing.Trace("Child contact {0} created for account '{1}' ({2}).",
+                contactId, accountName ?? "(null)", accountId);
+
             return contactId;
         }
     }

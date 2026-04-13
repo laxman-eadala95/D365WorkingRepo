@@ -10,18 +10,20 @@ namespace D365.Customizations.Tests.Account
     public class ChildContactServiceTests
     {
         [Fact]
-        public void TC_AV01_CreateCalledOnce()
+        public void CreateChildContact_CallsServiceCreate()
         {
             var org = new Mock<IOrganizationService>();
             org.Setup(o => o.Create(It.IsAny<Entity>())).Returns(Guid.NewGuid());
             var trace = new Mock<ITracingService>();
-            var s = new ChildContactService(org.Object, trace.Object);
-            s.CreateChildContact(Guid.NewGuid(), "Acme");
+
+            var svc = new ChildContactService(org.Object, trace.Object);
+            svc.CreateChildContact(Guid.NewGuid(), "Acme");
+
             org.Verify(o => o.Create(It.IsAny<Entity>()), Times.Once);
         }
 
         [Fact]
-        public void TC_AV02_FieldsSetCorrectly()
+        public void CreatedContact_HasCorrectFields()
         {
             Entity captured = null;
             var org = new Mock<IOrganizationService>();
@@ -29,17 +31,17 @@ namespace D365.Customizations.Tests.Account
                 .Callback<Entity>(e => captured = e)
                 .Returns(Guid.NewGuid());
             var trace = new Mock<ITracingService>();
-            var s = new ChildContactService(org.Object, trace.Object);
-            var aid = Guid.NewGuid();
-            s.CreateChildContact(aid, "Acme");
+
+            new ChildContactService(org.Object, trace.Object)
+                .CreateChildContact(Guid.NewGuid(), "Acme");
 
             Assert.NotNull(captured);
-            Assert.Equal(ContactConstants.DefaultFirstName, captured.GetAttributeValue<string>(ContactConstants.AttributeFirstName));
-            Assert.Equal("Acme", captured.GetAttributeValue<string>(ContactConstants.AttributeLastName));
+            Assert.Equal("Default", captured.GetAttributeValue<string>("firstname"));
+            Assert.Equal("Acme", captured.GetAttributeValue<string>("lastname"));
         }
 
         [Fact]
-        public void TC_AV03_ParentReference_IsAccount()
+        public void CreatedContact_HasCorrectParentReference()
         {
             Entity captured = null;
             var org = new Mock<IOrganizationService>();
@@ -47,13 +49,15 @@ namespace D365.Customizations.Tests.Account
                 .Callback<Entity>(e => captured = e)
                 .Returns(Guid.NewGuid());
             var trace = new Mock<ITracingService>();
-            var s = new ChildContactService(org.Object, trace.Object);
-            var aid = Guid.NewGuid();
-            s.CreateChildContact(aid, "X");
+
+            var accountId = Guid.NewGuid();
+            new ChildContactService(org.Object, trace.Object)
+                .CreateChildContact(accountId, "X");
+
             Assert.NotNull(captured);
-            var parent = captured.GetAttributeValue<EntityReference>(ContactConstants.AttributeParentCustomerId);
-            Assert.Equal(AccountConstants.EntityLogicalName, parent.LogicalName);
-            Assert.Equal(aid, parent.Id);
+            var parent = captured.GetAttributeValue<EntityReference>("parentcustomerid");
+            Assert.Equal("account", parent.LogicalName);
+            Assert.Equal(accountId, parent.Id);
         }
     }
 }

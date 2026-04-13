@@ -10,55 +10,67 @@ namespace D365.Customizations.Tests.Contact
     public class DuplicateContactValidatorTests
     {
         [Fact]
-        public void TC_PV01_EmailExists_ReturnsTrue_WhenContactFound()
+        public void EmailExists_ReturnsTrue_WhenMatchFound()
         {
             var org = new Mock<IOrganizationService>();
             org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
-                .Returns(new EntityCollection(new[] { new Entity(ContactConstants.EntityLogicalName) }));
-            var v = new DuplicateContactValidator(org.Object);
-            Assert.True(v.EmailExists("a@b.com"));
+                .Returns(new EntityCollection(new[] { new Entity("contact") }));
+
+            var validator = new DuplicateContactValidator(org.Object);
+
+            Assert.True(validator.EmailExists("test@example.com"));
         }
 
         [Fact]
-        public void TC_PV02_EmailExists_ReturnsFalse_WhenNone()
+        public void EmailExists_ReturnsFalse_WhenNoMatch()
         {
             var org = new Mock<IOrganizationService>();
             org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
                 .Returns(new EntityCollection());
-            var v = new DuplicateContactValidator(org.Object);
-            Assert.False(v.EmailExists("a@b.com"));
+
+            var validator = new DuplicateContactValidator(org.Object);
+
+            Assert.False(validator.EmailExists("new@example.com"));
         }
 
         [Fact]
-        public void TC_PV04_ValidateDuplicate_ThrowsWithExactMessage()
+        public void Validate_ThrowsWithExactMessage_WhenDuplicate()
         {
             var org = new Mock<IOrganizationService>();
             org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
-                .Returns(new EntityCollection(new[] { new Entity(ContactConstants.EntityLogicalName) }));
-            var v = new DuplicateContactValidator(org.Object);
-            var ex = Assert.Throws<InvalidPluginExecutionException>(() => v.ValidateNoDuplicateEmail("x@y.com"));
+                .Returns(new EntityCollection(new[] { new Entity("contact") }));
+
+            var validator = new DuplicateContactValidator(org.Object);
+
+            var ex = Assert.Throws<InvalidPluginExecutionException>(
+                () => validator.ValidateNoDuplicateEmail("dup@example.com"));
+
             Assert.Equal(ContactConstants.DuplicateEmailMessage, ex.Message);
         }
 
         [Fact]
-        public void TC_PV05_NullEmail_DoesNotQuery()
+        public void Validate_SkipsCheck_WhenEmailIsNull()
         {
             var org = new Mock<IOrganizationService>();
-            var v = new DuplicateContactValidator(org.Object);
-            v.ValidateNoDuplicateEmail(null);
+            var validator = new DuplicateContactValidator(org.Object);
+
+            validator.ValidateNoDuplicateEmail(null);
+
             org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()), Times.Never);
         }
 
         [Fact]
-        public void TC_PV08_QueryUsesTopCountOne()
+        public void Query_UsesTopCountOne_ForPerformance()
         {
             QueryExpression captured = null;
             var org = new Mock<IOrganizationService>();
             org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
                 .Callback<QueryExpression>(q => captured = q)
                 .Returns(new EntityCollection());
-            var v = new DuplicateContactValidator(org.Object);
-            v.EmailExists("t@t.com");
+
+            var validator = new DuplicateContactValidator(org.Object);
+            validator.EmailExists("t@t.com");
+
             Assert.NotNull(captured);
             Assert.Equal(1, captured.TopCount);
         }

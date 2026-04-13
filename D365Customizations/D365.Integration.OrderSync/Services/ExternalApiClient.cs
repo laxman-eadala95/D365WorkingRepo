@@ -8,51 +8,35 @@ using Newtonsoft.Json;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Production client: POST JSON to a configured base URL (HTTPS recommended).
+    /// Posts order payloads as JSON to a configured REST endpoint.
     /// </summary>
-    public sealed class ExternalApiClient : IExternalApiClient
+    public class ExternalApiClient : IExternalApiClient
     {
         private readonly HttpClient _httpClient;
-        private readonly string _ordersEndpoint;
+        private readonly string _endpoint;
 
-        public ExternalApiClient(HttpClient httpClient, string ordersEndpoint)
+        public ExternalApiClient(HttpClient httpClient, string endpoint)
         {
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _ordersEndpoint = ordersEndpoint ?? throw new ArgumentNullException(nameof(ordersEndpoint));
+            _httpClient = httpClient;
+            _endpoint = endpoint;
         }
 
-        /// <inheritdoc />
         public async Task<ApiResponse> SendOrderAsync(OrderDetailsPayload payload)
         {
-            if (payload == null)
-            {
-                throw new ArgumentNullException(nameof(payload));
-            }
-
             try
             {
                 var json = JsonConvert.SerializeObject(payload);
-                using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
-                {
-                    var response = await _httpClient.PostAsync(_ordersEndpoint, content).ConfigureAwait(false);
-                    var body = response.Content != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return new ApiResponse
-                        {
-                            IsSuccess = true,
-                            StatusCode = (int)response.StatusCode,
-                            ErrorMessage = null
-                        };
-                    }
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                    return new ApiResponse
-                    {
-                        IsSuccess = false,
-                        StatusCode = (int)response.StatusCode,
-                        ErrorMessage = string.IsNullOrEmpty(body) ? response.ReasonPhrase : body
-                    };
-                }
+                var response = await _httpClient.PostAsync(_endpoint, content).ConfigureAwait(false);
+                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                return new ApiResponse
+                {
+                    IsSuccess = response.IsSuccessStatusCode,
+                    StatusCode = (int)response.StatusCode,
+                    ErrorMessage = response.IsSuccessStatusCode ? null : body
+                };
             }
             catch (HttpRequestException ex)
             {

@@ -8,31 +8,26 @@ namespace D365.Customizations.Tests.Base
     public class PluginBaseTests
     {
         [Fact]
-        public void TC_B01_ValidServiceProvider_CallsExecuteBusinessLogic()
+        public void ValidTarget_CallsBusinessLogic()
         {
             var target = new Entity(ContactConstants.EntityLogicalName);
-            var m = PluginMockFactory.CreatePluginMockContext(target, "Create", 10);
+            var mock = PluginMockFactory.Create(target, "Create", 10);
+
             var plugin = new TestPlugin();
-            plugin.Execute(m.ServiceProvider.Object);
-            Assert.Equal(1, plugin.BusinessLogicCallCount);
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(1, plugin.CallCount);
         }
 
         [Fact]
-        public void TC_B02_NullTarget_DoesNotCallExecuteBusinessLogic()
+        public void NullTarget_SkipsBusinessLogic()
         {
-            var m = PluginMockFactory.CreatePluginMockContext(null, "Create", 10);
-            var plugin = new TestPlugin();
-            plugin.Execute(m.ServiceProvider.Object);
-            Assert.Equal(0, plugin.BusinessLogicCallCount);
-        }
+            var mock = PluginMockFactory.Create(null, "Create", 10);
 
-        [Fact]
-        public void TC_B03_MissingTargetKey_DoesNotCallExecuteBusinessLogic()
-        {
-            var m = PluginMockFactory.CreatePluginMockContext(null, "Create", 10);
             var plugin = new TestPlugin();
-            plugin.Execute(m.ServiceProvider.Object);
-            Assert.Equal(0, plugin.BusinessLogicCallCount);
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(0, plugin.CallCount);
         }
     }
 }

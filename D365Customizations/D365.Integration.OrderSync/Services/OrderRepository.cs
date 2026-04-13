@@ -7,18 +7,17 @@ using Microsoft.Xrm.Sdk.Query;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Query-based repository using <see cref="QueryExpression"/> (late-bound).
+    /// Retrieves sales orders from Dataverse using QueryExpression (late-bound).
     /// </summary>
-    public sealed class OrderRepository : IOrderRepository
+    public class OrderRepository : IOrderRepository
     {
         private readonly IOrganizationService _service;
 
         public OrderRepository(IOrganizationService service)
         {
-            _service = service ?? throw new ArgumentNullException(nameof(service));
+            _service = service;
         }
 
-        /// <inheritdoc />
         public IList<Entity> GetOrdersCreatedSince(DateTime since)
         {
             var query = new QueryExpression(OrderConstants.EntityLogicalName)
@@ -41,8 +40,7 @@ namespace D365.Integration.OrderSync.Services
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
-            return results.Entities;
+            return _service.RetrieveMultiple(query).Entities;
         }
     }
 }
