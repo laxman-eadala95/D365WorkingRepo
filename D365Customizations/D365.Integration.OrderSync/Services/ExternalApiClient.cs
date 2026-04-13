@@ -29,7 +29,9 @@ namespace D365.Integration.OrderSync.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync(_endpoint, content).ConfigureAwait(false);
-                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var body = response.Content != null
+                    ? await response.Content.ReadAsStringAsync().ConfigureAwait(false)
+                    : string.Empty;
 
                 return new ApiResponse
                 {

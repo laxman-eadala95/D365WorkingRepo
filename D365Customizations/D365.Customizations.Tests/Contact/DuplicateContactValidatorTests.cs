@@ -13,7 +13,7 @@ namespace D365.Customizations.Tests.Contact
         public void EmailExists_ReturnsTrue_WhenMatchFound()
         {
             var org = new Mock<IOrganizationService>();
-            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
+            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
                 .Returns(new EntityCollection(new[] { new Entity("contact") }));
 
             var validator = new DuplicateContactValidator(org.Object);
@@ -25,7 +25,7 @@ namespace D365.Customizations.Tests.Contact
         public void EmailExists_ReturnsFalse_WhenNoMatch()
         {
             var org = new Mock<IOrganizationService>();
-            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
+            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
                 .Returns(new EntityCollection());
 
             var validator = new DuplicateContactValidator(org.Object);
@@ -37,7 +37,7 @@ namespace D365.Customizations.Tests.Contact
         public void Validate_ThrowsWithExactMessage_WhenDuplicate()
         {
             var org = new Mock<IOrganizationService>();
-            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
+            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
                 .Returns(new EntityCollection(new[] { new Entity("contact") }));
 
             var validator = new DuplicateContactValidator(org.Object);
@@ -56,7 +56,7 @@ namespace D365.Customizations.Tests.Contact
 
             validator.ValidateNoDuplicateEmail(null);
 
-            org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()), Times.Never);
+            org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
         }
 
         [Fact]
@@ -64,8 +64,9 @@ namespace D365.Customizations.Tests.Contact
         {
             QueryExpression captured = null;
             var org = new Mock<IOrganizationService>();
-            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
-                .Callback<QueryExpression>(q => captured = q)
+            // SDK exposes RetrieveMultiple(QueryBase); Moq callbacks must use the same parameter type.
+            org.Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
+                .Callback<QueryBase>(q => captured = q as QueryExpression)
                 .Returns(new EntityCollection());
 
             var validator = new DuplicateContactValidator(org.Object);

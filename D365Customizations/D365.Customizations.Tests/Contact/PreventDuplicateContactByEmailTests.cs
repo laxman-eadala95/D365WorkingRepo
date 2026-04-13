@@ -18,7 +18,7 @@ namespace D365.Customizations.Tests.Contact
 
             var mock = PluginMockFactory.Create(target, "Create", 10);
             mock.OrganizationService
-                .Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
+                .Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
                 .Returns(new EntityCollection());
 
             new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object);
@@ -32,7 +32,7 @@ namespace D365.Customizations.Tests.Contact
 
             var mock = PluginMockFactory.Create(target, "Create", 10);
             mock.OrganizationService
-                .Setup(o => o.RetrieveMultiple(It.IsAny<QueryExpression>()))
+                .Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
                 .Returns(new EntityCollection(new[] { new Entity("contact") }));
 
             Assert.Throws<InvalidPluginExecutionException>(

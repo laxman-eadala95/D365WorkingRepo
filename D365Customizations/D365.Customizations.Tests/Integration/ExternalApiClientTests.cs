@@ -14,7 +14,10 @@ namespace D365.Customizations.Tests.Integration
         [Fact]
         public async Task Http200_ReturnsSuccess()
         {
-            var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
+            var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(string.Empty)
+            });
             var client = new ExternalApiClient(new HttpClient(handler), "https://test/api/orders");
 
             var result = await client.SendOrderAsync(new OrderDetailsPayload());
@@ -26,7 +29,10 @@ namespace D365.Customizations.Tests.Integration
         [Fact]
         public async Task Http500_ReturnsFailure()
         {
-            var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+            var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(string.Empty)
+            });
             var client = new ExternalApiClient(new HttpClient(handler), "https://test/api/orders");
 
             var result = await client.SendOrderAsync(new OrderDetailsPayload());
