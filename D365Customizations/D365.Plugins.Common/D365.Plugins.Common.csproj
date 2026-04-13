@@ -1,17 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
-    <RootNamespace>CustomPlugins</RootNamespace>
-    <AssemblyName>CustomPlugins</AssemblyName>
-    <OutputType>Library</OutputType>
+    <RootNamespace>D365.Plugins.Common</RootNamespace>
+    <AssemblyName>D365.Plugins.Common</AssemblyName>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.56" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\D365.Plugins.Common\D365.Plugins.Common.csproj" />
   </ItemGroup>
 </Project>

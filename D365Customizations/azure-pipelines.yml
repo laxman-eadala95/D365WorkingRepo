@@ -1,0 +1,39 @@
+# Skeleton CI/CD for D365 customizations (.NET SDK + MSBuild)
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '8.x'
+
+  - script: dotnet restore "D365Customizations/D365.Plugins.Common/D365.Plugins.Common.csproj"
+    displayName: 'dotnet restore (sample)'
+
+  - script: |
+      dotnet build "D365Customizations/D365.Plugins.Common/D365.Plugins.Common.csproj" -c $(buildConfiguration)
+      dotnet build "D365Customizations/CustomPlugins/CustomPlugins.csproj" -c $(buildConfiguration)
+      dotnet build "D365Customizations/D365.Integration.OrderSync/D365.Integration.OrderSync.csproj" -c $(buildConfiguration)
+      dotnet build "D365Customizations/D365.Customizations.Tests/D365.Customizations.Tests.csproj" -c $(buildConfiguration)
+      dotnet build "D365Customizations/OrderMock.Functions/OrderMock.Functions.csproj" -c $(buildConfiguration)
+    displayName: 'dotnet build projects'
+
+  - script: dotnet test "D365Customizations/D365.Customizations.Tests/D365.Customizations.Tests.csproj" -c $(buildConfiguration)
+    displayName: 'dotnet test'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: 'D365Customizations/CustomPlugins/bin/$(buildConfiguration)/net462'
+      ArtifactName: 'CustomPlugins'
+    displayName: 'Publish plugin assembly artifact'
+
+  # Deploy: use `pac auth` + `pac plugin push` or solution import in a manual/environment-gated stage.
