@@ -1,3 +1,10 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Unit tests for DuplicateContactValidator email query and ValidateNoDuplicateEmail behavior. Refer to following steps
+**     1. Cover EmailExists true/false, exception message, skip when email null, TopCount equals 1
+*/
+
 using CustomPlugins.Services;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
@@ -7,8 +14,12 @@ using Xunit;
 
 namespace D365.Customizations.Tests.Contact
 {
+    /// <summary>
+    /// Tests for <see cref="DuplicateContactValidator"/> email existence and exception behavior.
+    /// </summary>
     public class DuplicateContactValidatorTests
     {
+        /// <summary>RetrieveMultiple returning one entity implies email exists.</summary>
         [Fact]
         public void EmailExists_ReturnsTrue_WhenMatchFound()
         {
@@ -21,6 +32,7 @@ namespace D365.Customizations.Tests.Contact
             Assert.True(validator.EmailExists("test@example.com"));
         }
 
+        /// <summary>Empty result set implies email is available.</summary>
         [Fact]
         public void EmailExists_ReturnsFalse_WhenNoMatch()
         {
@@ -33,6 +45,7 @@ namespace D365.Customizations.Tests.Contact
             Assert.False(validator.EmailExists("new@example.com"));
         }
 
+        /// <summary>Duplicate should surface the configured user message.</summary>
         [Fact]
         public void Validate_ThrowsWithExactMessage_WhenDuplicate()
         {
@@ -48,6 +61,7 @@ namespace D365.Customizations.Tests.Contact
             Assert.Equal(ContactConstants.DuplicateEmailMessage, ex.Message);
         }
 
+        /// <summary>Null/empty email should skip RetrieveMultiple entirely.</summary>
         [Fact]
         public void Validate_SkipsCheck_WhenEmailIsNull()
         {
@@ -59,6 +73,7 @@ namespace D365.Customizations.Tests.Contact
             org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
         }
 
+        /// <summary>Query should limit to one row for performance at scale.</summary>
         [Fact]
         public void Query_UsesTopCountOne_ForPerformance()
         {

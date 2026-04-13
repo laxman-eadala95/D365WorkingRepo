@@ -1,3 +1,12 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Console app entry that syncs Sales Orders from Dataverse to an external API or mock. Refer to following steps
+**     1. Read Dataverse connection and API URL from App.config or environment variables
+**     2. Connect with ServiceClient; choose OrderRepository and real or mock IExternalApiClient
+**     3. Parse optional UTC since argument; run OrderSyncService.SyncNewOrdersAsync
+*/
+
 using System;
 using System.Configuration;
 using System.Net.Http;
@@ -9,9 +18,13 @@ namespace D365.Integration.OrderSync
 {
     internal static class Program
     {
+        /// <summary>
+        /// Application entry: connects to Dataverse, builds repository and API client, runs sync for orders since a cutoff time.
+        /// </summary>
+        /// <param name="args">Optional first argument: UTC date/time parsed as sync lower bound (default: last 24 hours).</param>
         private static async Task Main(string[] args)
         {
-            // Read config: prefer environment variables, fall back to App.config
+            // Prefer App.config; environment variables override for CI/containers.
             var connectionString = ConfigurationManager.AppSettings["CrmConnection"]
                 ?? Environment.GetEnvironmentVariable("CRM_CONNECTION_STRING");
 
@@ -53,7 +66,7 @@ namespace D365.Integration.OrderSync
 
                 var sync = new OrderSyncService(repository, apiClient, Console.WriteLine);
 
-                // Default: last 24 hours; or pass a UTC date as first arg
+                // Default window: last 24 hours; optional CLI arg overrides with a UTC instant.
                 var since = DateTime.UtcNow.AddHours(-24);
                 if (args?.Length > 0 && DateTime.TryParse(args[0], null,
                         System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsed))

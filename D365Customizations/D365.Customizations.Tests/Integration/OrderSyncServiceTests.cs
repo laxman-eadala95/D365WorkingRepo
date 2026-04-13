@@ -1,3 +1,11 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Tests OrderSyncService sync loop, logging, MapToPayload, and StubOrderRepository. Refer to following steps
+**     1. Empty orders logs no work; single order with mock API logs SUCCESS
+**     2. MapToPayload maps name, Money total, and createdon
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,8 +17,12 @@ using Xunit;
 
 namespace D365.Customizations.Tests.Integration
 {
+    /// <summary>
+    /// Tests for <see cref="OrderSyncService"/> sync loop and static mapping helper.
+    /// </summary>
     public class OrderSyncServiceTests
     {
+        /// <summary>Empty repository should log that no orders were found.</summary>
         [Fact]
         public async Task NoOrders_LogsNoWorkMessage()
         {
@@ -25,6 +37,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Contains("No orders found", logs[0]);
         }
 
+        /// <summary>Single order and successful API should produce a SUCCESS log line.</summary>
         [Fact]
         public async Task ValidOrder_LogsSuccess()
         {
@@ -45,6 +58,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Contains("SUCCESS", logs[0]);
         }
 
+        /// <summary>MapToPayload should copy name, money value, and created-on.</summary>
         [Fact]
         public void MapToPayload_MapsFieldsCorrectly()
         {
@@ -63,7 +77,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Equal(new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc), payload.OrderDate);
         }
 
-        // Simple stub for tests - just returns what you give it
+        /// <summary>In-memory repository stub returning a fixed list for tests.</summary>
         private class StubOrderRepository : IOrderRepository
         {
             private readonly IList<Entity> _orders;
@@ -73,6 +87,7 @@ namespace D365.Customizations.Tests.Integration
                 _orders = orders;
             }
 
+            /// <inheritdoc />
             public IList<Entity> GetOrdersCreatedSince(DateTime since) => _orders;
         }
     }

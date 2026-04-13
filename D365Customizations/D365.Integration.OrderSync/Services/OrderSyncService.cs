@@ -1,3 +1,12 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Orchestrates fetching orders from Dataverse and posting each payload to the external API with per-order logging. Refer to following steps
+**     1. Get orders from IOrderRepository for createdon since the given timestamp
+**     2. Map each Entity to OrderDetailsPayload and await IExternalApiClient.SendOrderAsync
+**     3. Log SUCCESS or FAILURE lines including status code and error text when failed
+*/
+
 using System;
 using System.Threading.Tasks;
 using D365.Integration.OrderSync.Models;
@@ -7,7 +16,7 @@ using Microsoft.Xrm.Sdk;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Fetches new orders from Dataverse and sends each one to the external API.
+    /// Fetches sales orders created on or after a timestamp and sends each mapped payload to <see cref="IExternalApiClient"/>.
     /// </summary>
     public class OrderSyncService
     {
@@ -15,6 +24,12 @@ namespace D365.Integration.OrderSync.Services
         private readonly IExternalApiClient _apiClient;
         private readonly Action<string> _log;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OrderSyncService"/> class.
+        /// </summary>
+        /// <param name="repository">Dataverse access for orders in the sync window.</param>
+        /// <param name="apiClient">Outbound HTTP (or mock) client.</param>
+        /// <param name="log">Optional logger; defaults to no-op when null.</param>
         public OrderSyncService(IOrderRepository repository, IExternalApiClient apiClient, Action<string> log)
         {
             _repository = repository;
@@ -22,6 +37,11 @@ namespace D365.Integration.OrderSync.Services
             _log = log ?? (_ => { });
         }
 
+        /// <summary>
+        /// Retrieves orders with <see cref="OrderConstants.AttributeCreatedOn"/> &gt;= <paramref name="since"/>,
+        /// maps each to <see cref="OrderDetailsPayload"/>, and awaits <see cref="IExternalApiClient.SendOrderAsync"/>.
+        /// </summary>
+        /// <param name="since">Inclusive lower bound (UTC recommended).</param>
         public async Task SyncNewOrdersAsync(DateTime since)
         {
             var orders = _repository.GetOrdersCreatedSince(since);
@@ -44,6 +64,11 @@ namespace D365.Integration.OrderSync.Services
             }
         }
 
+        /// <summary>
+        /// Maps a late-bound sales order <see cref="Entity"/> to the contract expected by the external API.
+        /// </summary>
+        /// <param name="order">Record from <see cref="IOrderRepository.GetOrdersCreatedSince"/>.</param>
+        /// <returns>Payload containing id, display name as customer label, total, and created date.</returns>
         public static OrderDetailsPayload MapToPayload(Entity order)
         {
             return new OrderDetailsPayload

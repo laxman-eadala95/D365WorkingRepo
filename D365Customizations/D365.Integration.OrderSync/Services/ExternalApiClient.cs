@@ -1,3 +1,11 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Posts OrderDetailsPayload as JSON to a REST endpoint and maps HttpResponse to ApiResponse. Refer to following steps
+**     1. Serialize payload with Newtonsoft.Json and POST to configured endpoint
+**     2. Map success flag, status code, and error body; catch HttpRequestException for network failures
+*/
+
 using System;
 using System.Net.Http;
 using System.Text;
@@ -8,19 +16,25 @@ using Newtonsoft.Json;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Posts order payloads as JSON to a configured REST endpoint.
+    /// Posts order payloads as JSON to a configured REST endpoint using <see cref="HttpClient"/>.
     /// </summary>
     public class ExternalApiClient : IExternalApiClient
     {
         private readonly HttpClient _httpClient;
         private readonly string _endpoint;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExternalApiClient"/> class.
+        /// </summary>
+        /// <param name="httpClient">HTTP client instance (base address optional; <paramref name="endpoint"/> is absolute or relative).</param>
+        /// <param name="endpoint">Full URL of the POST resource.</param>
         public ExternalApiClient(HttpClient httpClient, string endpoint)
         {
             _httpClient = httpClient;
             _endpoint = endpoint;
         }
 
+        /// <inheritdoc />
         public async Task<ApiResponse> SendOrderAsync(OrderDetailsPayload payload)
         {
             try

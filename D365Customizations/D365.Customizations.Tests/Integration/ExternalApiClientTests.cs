@@ -1,3 +1,10 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Tests ExternalApiClient with Stub HttpMessageHandler for 200 and 500 responses without network. Refer to following steps
+**     1. Assert ApiResponse IsSuccess and StatusCode for success and failure paths
+*/
+
 using System;
 using System.Net;
 using System.Net.Http;
@@ -9,8 +16,12 @@ using Xunit;
 
 namespace D365.Customizations.Tests.Integration
 {
+    /// <summary>
+    /// Tests for <see cref="ExternalApiClient"/> success and error status mapping.
+    /// </summary>
     public class ExternalApiClientTests
     {
+        /// <summary>2xx response should yield IsSuccess and status code.</summary>
         [Fact]
         public async Task Http200_ReturnsSuccess()
         {
@@ -26,6 +37,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Equal(200, result.StatusCode);
         }
 
+        /// <summary>5xx response should be treated as failure with status preserved.</summary>
         [Fact]
         public async Task Http500_ReturnsFailure()
         {
@@ -41,7 +53,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Equal(500, result.StatusCode);
         }
 
-        // Returns a canned HTTP response for testing
+        /// <summary>Test handler that returns a canned <see cref="HttpResponseMessage"/> per request.</summary>
         private class StubHandler : HttpMessageHandler
         {
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _respond;
@@ -51,6 +63,7 @@ namespace D365.Customizations.Tests.Integration
                 _respond = respond;
             }
 
+            /// <inheritdoc />
             protected override Task<HttpResponseMessage> SendAsync(
                 HttpRequestMessage request, CancellationToken cancellationToken)
             {

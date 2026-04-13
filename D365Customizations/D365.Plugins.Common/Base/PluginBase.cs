@@ -1,21 +1,36 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Base plugin entry for Dataverse that resolves pipeline services and invokes entity-specific logic only when a valid Target exists. Refer to following steps
+**     1. Obtain IPluginExecutionContext, ITracingService, and IOrganizationServiceFactory from IServiceProvider
+**     2. Validate InputParameters contains an Entity Target; exit early otherwise
+**     3. Create impersonated IOrganizationService and LocalPluginContext, then call ExecuteBusinessLogic
+*/
+
 using System;
 using Microsoft.Xrm.Sdk;
 
 namespace D365.Plugins.Common.Base
 {
     /// <summary>
-    /// Base class for all D365 plugins. Handles the repetitive service extraction
-    /// from the pipeline so each plugin only implements its own business logic.
+    /// Base class for all D365 plugins. Centralizes retrieval of execution context,
+    /// tracing, organization service factory, and the Target entity so derived plugins
+    /// only implement business rules.
     /// </summary>
     public abstract class PluginBase : IPlugin
     {
+        /// <summary>
+        /// Plugin pipeline entry. Extracts services from <see cref="IServiceProvider"/>,
+        /// validates <c>InputParameters["Target"]</c>, and calls <see cref="ExecuteBusinessLogic"/>.
+        /// </summary>
+        /// <param name="serviceProvider">Runtime service provider supplied by the platform.</param>
         public void Execute(IServiceProvider serviceProvider)
         {
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
             var tracing = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
             var factory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
 
-            // Guard: if Target is missing or not an Entity, nothing to do
+            // No Target or wrong type: nothing to process (avoids null reference downstream).
             if (!context.InputParameters.Contains("Target"))
                 return;
 
@@ -29,8 +44,9 @@ namespace D365.Plugins.Common.Base
         }
 
         /// <summary>
-        /// Override this with your entity-specific logic. The pipeline plumbing is already done.
+        /// Implement entity-specific behavior. Called only when Target is a non-null <see cref="Entity"/>.
         /// </summary>
+        /// <param name="localContext">Bundled context, service, tracing, and Target.</param>
         protected abstract void ExecuteBusinessLogic(LocalPluginContext localContext);
     }
 }

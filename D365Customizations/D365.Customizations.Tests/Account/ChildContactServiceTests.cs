@@ -1,3 +1,10 @@
+/*
+** Author: Laxman Eadala
+** Date: 12-04-2026
+** Description: Unit tests for ChildContactService entity fields and parent account EntityReference. Refer to following steps
+**     1. Verify Create invocation, firstname/lastname, and parentcustomerid to account
+*/
+
 using System;
 using CustomPlugins.Services;
 using D365.Plugins.Common.Constants;
@@ -7,8 +14,12 @@ using Xunit;
 
 namespace D365.Customizations.Tests.Account
 {
+    /// <summary>
+    /// Tests for <see cref="ChildContactService"/> Create behavior and field population.
+    /// </summary>
     public class ChildContactServiceTests
     {
+        /// <summary>Service should invoke IOrganizationService.Create exactly once.</summary>
         [Fact]
         public void CreateChildContact_CallsServiceCreate()
         {
@@ -22,6 +33,7 @@ namespace D365.Customizations.Tests.Account
             org.Verify(o => o.Create(It.IsAny<Entity>()), Times.Once);
         }
 
+        /// <summary>Created entity should use default first name and account name as last name.</summary>
         [Fact]
         public void CreatedContact_HasCorrectFields()
         {
@@ -40,6 +52,7 @@ namespace D365.Customizations.Tests.Account
             Assert.Equal("Acme", captured.GetAttributeValue<string>("lastname"));
         }
 
+        /// <summary>Parent customer lookup should reference the account id and logical name.</summary>
         [Fact]
         public void CreatedContact_HasCorrectParentReference()
         {
