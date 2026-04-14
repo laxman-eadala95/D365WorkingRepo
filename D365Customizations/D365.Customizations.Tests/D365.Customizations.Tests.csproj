@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\D365.Plugins.Common\D365.Plugins.Common.csproj" />
-    <ProjectReference Include="..\CustomPlugins\CustomPlugins.csproj" />
+    <ProjectReference Include="..\D365.SalesPlugins\D365.SalesPlugins.csproj" />
     <ProjectReference Include="..\D365.Integration.OrderSync\D365.Integration.OrderSync.csproj" />
   </ItemGroup>
 </Project>

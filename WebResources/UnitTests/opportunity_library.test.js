@@ -24,9 +24,9 @@ describe('Opportunity Constants Validation', () => {
     //* Even a single character difference would cause getAttribute() or getControl() to return null
     test('TC-K04: opportunityFieldLogicalNames should have correct D365 schema names', () => {
         expect(global.opportunityFieldLogicalNames.estimatedvalue).toBe("estimatedvalue");
-        expect(global.opportunityFieldLogicalNames.opportunityTypeCode).toBe("opportunitytypecode");
-        expect(global.opportunityFieldLogicalNames.totalunits).toBe("totalunits");
-        expect(global.opportunityFieldLogicalNames.priceperunit).toBe("priceperunit");
+        expect(global.opportunityFieldLogicalNames.opportunityTypeCode).toBe("le_opportunitytypecode");
+        expect(global.opportunityFieldLogicalNames.totalunits).toBe("le_totalunits");
+        expect(global.opportunityFieldLogicalNames.priceperunit).toBe("le_priceperunit");
         expect(global.opportunityFieldLogicalNames.discountamount).toBe("discountamount");
     });
 
@@ -46,32 +46,26 @@ describe('Opportunity Constants Validation', () => {
 
 describe('opportunitiesLib Module Structure', () => {
 
-    //* TC-O10: opportunitiesLib.OnLoad() must be callable and must expose OnFormLoad
+    //* TC-O10: opportunitiesLib.OnLoad is an IIFE that returns an object exposing OnFormLoad
     //* If this is broken, the D365 form OnLoad event would fail silently
-    test('TC-O10: OnLoad should be a function returning an object with OnFormLoad', () => {
-        expect(typeof global.opportunitiesLib.OnLoad).toBe('function');
-        var onLoadModule = global.opportunitiesLib.OnLoad();
-        expect(onLoadModule).toHaveProperty('OnFormLoad');
-        expect(typeof onLoadModule.OnFormLoad).toBe('function');
+    test('TC-O10: OnLoad should be an object with OnFormLoad', () => {
+        expect(typeof global.opportunitiesLib.OnLoad).toBe('object');
+        expect(global.opportunitiesLib.OnLoad).toHaveProperty('OnFormLoad');
+        expect(typeof global.opportunitiesLib.OnLoad.OnFormLoad).toBe('function');
     });
 
     //* TC-O11: D365 calls OnOpportunityTypeChange when the user changes the Opportunity Type dropdown
-    //* OnEstimatedRevenueFieldsChange is registered on totalunits, priceperunit, discountamount fields
-    test('TC-O11: OnChange should expose OnOpportunityTypeChange and OnEstimatedRevenueFieldsChange', () => {
-        expect(typeof global.opportunitiesLib.OnChange).toBe('function');
-        var onChangeModule = global.opportunitiesLib.OnChange();
-        expect(onChangeModule).toHaveProperty('OnOpportunityTypeChange');
-        expect(typeof onChangeModule.OnOpportunityTypeChange).toBe('function');
-        expect(onChangeModule).toHaveProperty('OnEstimatedRevenueFieldsChange');
-        expect(typeof onChangeModule.OnEstimatedRevenueFieldsChange).toBe('function');
+    test('TC-O11: OnChange should expose OnOpportunityTypeChange', () => {
+        expect(typeof global.opportunitiesLib.OnChange).toBe('object');
+        expect(global.opportunitiesLib.OnChange).toHaveProperty('OnOpportunityTypeChange');
+        expect(typeof global.opportunitiesLib.OnChange.OnOpportunityTypeChange).toBe('function');
     });
 
-    //* TC-O12: Even though OnFormSave is currently empty, the structure must exist so D365 can bind to it
-    test('TC-O12: OnSave should be a function returning an object with OnFormSave', () => {
-        expect(typeof global.opportunitiesLib.OnSave).toBe('function');
-        var onSaveModule = global.opportunitiesLib.OnSave();
-        expect(onSaveModule).toHaveProperty('OnFormSave');
-        expect(typeof onSaveModule.OnFormSave).toBe('function');
+    //* TC-O12: The structure must exist so D365 can bind to the OnFormSave handler
+    test('TC-O12: OnSave should be an object with OnFormSave', () => {
+        expect(typeof global.opportunitiesLib.OnSave).toBe('object');
+        expect(global.opportunitiesLib.OnSave).toHaveProperty('OnFormSave');
+        expect(typeof global.opportunitiesLib.OnSave.OnFormSave).toBe('function');
     });
 });
 
@@ -96,7 +90,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         //* (opportunityType === opportunityTypes.FixedPrice) evaluates to true, so setDisabled(true) is expected
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
@@ -116,7 +110,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         //* (99 === 1) is false, so setDisabled(false) -- field stays editable
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
@@ -135,7 +129,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(false);
@@ -153,7 +147,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(false);
@@ -175,7 +169,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
@@ -200,7 +194,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(0);
@@ -222,7 +216,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             }
         });
 
-        global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+        global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(1000);
@@ -240,7 +234,7 @@ describe('Opportunity Form - Defensive Edge Cases', () => {
     //* The code uses optional chaining (executionContext?.getFormContext()) which handles this
     test('TC-O07: Null executionContext should not throw errors', () => {
         expect(() => {
-            global.opportunitiesLib.OnLoad().OnFormLoad(null);
+            global.opportunitiesLib.OnLoad.OnFormLoad(null);
         }).not.toThrow();
     });
 
@@ -251,7 +245,7 @@ describe('Opportunity Form - Defensive Edge Cases', () => {
         };
 
         expect(() => {
-            global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+            global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
         }).not.toThrow();
 
         //* Verify getFormContext was called -- the function did attempt to get it before bailing out
@@ -270,7 +264,7 @@ describe('Opportunity Form - Defensive Edge Cases', () => {
         });
 
         expect(() => {
-            global.opportunitiesLib.OnLoad().OnFormLoad(executionContext);
+            global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
         }).not.toThrow();
     });
 });
@@ -296,7 +290,7 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
         });
 
         //* Call via OnChange handler instead of OnLoad -- different entry point, same underlying logic
-        global.opportunitiesLib.OnChange().OnOpportunityTypeChange(executionContext);
+        global.opportunitiesLib.OnChange.OnOpportunityTypeChange(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
@@ -314,7 +308,7 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
             }
         });
 
-        global.opportunitiesLib.OnChange().OnOpportunityTypeChange(executionContext);
+        global.opportunitiesLib.OnChange.OnOpportunityTypeChange(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(false);
@@ -335,7 +329,7 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
             }
         });
 
-        global.opportunitiesLib.OnChange().OnOpportunityTypeChange(executionContext);
+        global.opportunitiesLib.OnChange.OnOpportunityTypeChange(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
@@ -347,91 +341,99 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
 
 //#endregion
 
-//! This region validates the OnEstimatedRevenueFieldsChange handler
-//! When a formula field changes and the type is Variable Price, Estimated Revenue should be recalculated automatically
-//#region OnChange_FormulaFields_Tests
-
-describe('Opportunity OnChange - OnEstimatedRevenueFieldsChange', () => {
-
-    //* TC-O05d: When a formula field changes and type is Variable Price the Estimated Revenue should be recalculated
-    //* (5 * 200) - 100 = 900
-    test('TC-O05d: Formula field change when VariablePrice should recalculate Estimated Revenue', () => {
-        var { executionContext, attributes } = createMockContext({
-            attributeValues: {
-                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
-                [global.opportunityFieldLogicalNames.totalunits]: 5,
-                [global.opportunityFieldLogicalNames.priceperunit]: 200,
-                [global.opportunityFieldLogicalNames.discountamount]: 100,
-                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
-            },
-        });
-
-        global.opportunitiesLib.OnChange().OnEstimatedRevenueFieldsChange(executionContext);
-
-        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
-            .toHaveBeenCalledWith(900);
-    });
-
-    //* TC-O05e: When a formula field changes but type is Fixed Price the Estimated Revenue should NOT be recalculated
-    //* The formula only applies to Variable Price opportunities
-    test('TC-O05e: Formula field change when FixedPrice should not recalculate Estimated Revenue', () => {
-        var { executionContext, attributes } = createMockContext({
-            attributeValues: {
-                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
-                [global.opportunityFieldLogicalNames.totalunits]: 5,
-                [global.opportunityFieldLogicalNames.priceperunit]: 200,
-                [global.opportunityFieldLogicalNames.discountamount]: 100,
-                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
-            },
-        });
-
-        global.opportunitiesLib.OnChange().OnEstimatedRevenueFieldsChange(executionContext);
-
-        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
-            .not.toHaveBeenCalled();
-    });
-
-    //* TC-O05f: When a formula field changes but type is null (no type selected yet) the Estimated Revenue should NOT be recalculated
-    test('TC-O05f: Formula field change when null type should not recalculate Estimated Revenue', () => {
-        var { executionContext, attributes } = createMockContext({
-            attributeValues: {
-                [global.opportunityFieldLogicalNames.opportunityTypeCode]: null,
-                [global.opportunityFieldLogicalNames.totalunits]: 5,
-                [global.opportunityFieldLogicalNames.priceperunit]: 200,
-                [global.opportunityFieldLogicalNames.discountamount]: 100,
-                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
-            },
-        });
-
-        global.opportunitiesLib.OnChange().OnEstimatedRevenueFieldsChange(executionContext);
-
-        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
-            .not.toHaveBeenCalled();
-    });
-
-    //* TC-O05g: Null executionContext on formula field change should not throw
-    test('TC-O05g: Null executionContext should not throw errors on formula field change', () => {
-        expect(() => {
-            global.opportunitiesLib.OnChange().OnEstimatedRevenueFieldsChange(null);
-        }).not.toThrow();
-    });
-});
-
-//#endregion
-
 //! This region validates the OnSave handler
 //#region OnSave_Tests
 
-describe('Opportunity OnSave', () => {
+describe('Opportunity OnSave - toggleEstimatedRevenueStatusByOpportunityType', () => {
 
-    //* TC-O06: OnSave handler should be callable without errors even though it's currently empty
+    //* TC-O06: OnFormSave should be callable without throwing errors
     //* D365 will invoke this on every form save -- if it throws, the save would fail
     test('TC-O06: OnFormSave should be callable without throwing errors', () => {
         var { executionContext } = createMockContext();
 
         expect(() => {
-            global.opportunitiesLib.OnSave().OnFormSave(executionContext);
+            global.opportunitiesLib.OnSave.OnFormSave(executionContext);
         }).not.toThrow();
+    });
+
+    //* TC-O06a: OnSave with FixedPrice should disable Estimated Revenue (mirrors TC-O01)
+    //* On save the toggle logic must run so the field state stays consistent with the opportunity type
+    test('TC-O06a: OnSave with FixedPrice should disable Estimated Revenue (mirrors TC-O01)', () => {
+        var { executionContext, controls } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
+            },
+            controlStates: {
+                [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
+            }
+        });
+
+        global.opportunitiesLib.OnSave.OnFormSave(executionContext);
+
+        expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
+            .toHaveBeenCalledWith(true);
+    });
+
+    //* TC-O06b: OnSave with VariablePrice should disable and auto-calculate Estimated Revenue (mirrors TC-O04a)
+    //* Formula: (Total Units * Unit Price) - Discount = (4 * 250) - 100 = 900
+    test('TC-O06b: OnSave with VariablePrice should disable and auto-calculate Estimated Revenue', () => {
+        var { executionContext, controls, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
+                [global.opportunityFieldLogicalNames.totalunits]: 4,
+                [global.opportunityFieldLogicalNames.priceperunit]: 250,
+                [global.opportunityFieldLogicalNames.discountamount]: 100,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+            controlStates: {
+                [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
+            }
+        });
+
+        global.opportunitiesLib.OnSave.OnFormSave(executionContext);
+
+        expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
+            .toHaveBeenCalledWith(true);
+        //* (4 * 250) - 100 = 900
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .toHaveBeenCalledWith(900);
+    });
+
+    //* TC-O06c: OnSave with non-FixedPrice/VariablePrice type should enable Estimated Revenue (mirrors TC-O02)
+    test('TC-O06c: OnSave with other type should enable Estimated Revenue (mirrors TC-O02)', () => {
+        var { executionContext, controls } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: 99,
+            },
+            controlStates: {
+                [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
+            }
+        });
+
+        global.opportunitiesLib.OnSave.OnFormSave(executionContext);
+
+        expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
+            .toHaveBeenCalledWith(false);
+    });
+
+    //* TC-O06d: Null executionContext should not throw -- same defensive pattern as OnLoad (TC-O07)
+    test('TC-O06d: Null executionContext should not throw errors on save', () => {
+        expect(() => {
+            global.opportunitiesLib.OnSave.OnFormSave(null);
+        }).not.toThrow();
+    });
+
+    //* TC-O06e: Null formContext should exit early without calling toggle logic
+    test('TC-O06e: Null formContext should exit early without calling setDisabled', () => {
+        var executionContext = {
+            getFormContext: jest.fn().mockReturnValue(null),
+        };
+
+        expect(() => {
+            global.opportunitiesLib.OnSave.OnFormSave(executionContext);
+        }).not.toThrow();
+
+        expect(executionContext.getFormContext).toHaveBeenCalled();
     });
 });
 

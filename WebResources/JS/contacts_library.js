@@ -14,7 +14,7 @@ var contactsLib = contactsLib || {};
  * @param {*} executionContext 
  * @returns 
  */
-contactsLib.OnLoad = function () {
+contactsLib.OnLoad = (function (executionContext) {
 
     /**
      *  *This function is used to trigger the main onload custom function
@@ -30,12 +30,12 @@ contactsLib.OnLoad = function () {
     return {
         OnFormLoad: onFormLoad
     };
-};
+})();
 
 /**
  * ! This section holds all the functions that have to be triggered on change events of fields
  */
-contactsLib.OnChange = function () {
+contactsLib.OnChange = (function (executionContext) {
 
     /**
      *  *This function is to set the state code selected to the Address 1 State field
@@ -51,12 +51,12 @@ contactsLib.OnChange = function () {
     return {
         OnPreferredContactMethodChange: onPreferredContactMethodChange
     };
-};
+})();
 
 /**
  * ! This section hold all the functions that have to be triggered on form save event
  */
-contactsLib.OnSave = function () {
+contactsLib.OnSave = (function (executionContext) {
 
     /**
      * *This function is used to trigger the main onsave custom function
@@ -72,7 +72,7 @@ contactsLib.OnSave = function () {
     return {
         OnFormSave: onFormSave
     };
-}
+})();
 //#endregion
 
 /**

@@ -66,9 +66,9 @@ const contactFormNotifications = {
  */
 const opportunityFieldLogicalNames = {
     estimatedvalue: "estimatedvalue",
-    opportunityTypeCode: "opportunitytypecode",
-    totalunits: "totalunits",
-    priceperunit: "priceperunit",
+    opportunityTypeCode: "le_opportunitytypecode",
+    totalunits: "le_totalunits",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
+    priceperunit: "le_priceperunit",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
     discountamount: "discountamount",
 }
 

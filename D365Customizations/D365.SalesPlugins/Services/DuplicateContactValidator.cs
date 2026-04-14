@@ -10,7 +10,7 @@ using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
-namespace CustomPlugins.Services
+namespace D365.SalesPlugins.Services
 {
     /// <summary>
     /// Checks whether a contact with the given email already exists in Dataverse.

@@ -10,7 +10,7 @@ using System;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
 
-namespace CustomPlugins.Services
+namespace D365.SalesPlugins.Services
 {
     /// <summary>
     /// Creates a child contact linked to an account and writes a trace log on successful create.

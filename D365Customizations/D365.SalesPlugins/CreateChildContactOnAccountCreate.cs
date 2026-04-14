@@ -7,11 +7,11 @@
 */
 
 using System;
-using CustomPlugins.Services;
+using D365.SalesPlugins.Services;
 using D365.Plugins.Common.Base;
 using D365.Plugins.Common.Constants;
 
-namespace CustomPlugins
+namespace D365.SalesPlugins
 {
     /// <summary>
     /// Registered on Account Create (Post-operation).

@@ -55,30 +55,27 @@ describe('Contacts Constants Validation', () => {
 
 describe('contactsLib Module Structure', () => {
 
-    //* TC-C11: contactsLib.OnLoad() must be callable and must expose OnFormLoad
+    //* TC-C11: contactsLib.OnLoad is an IIFE that returns an object exposing OnFormLoad
     //* If this is broken, the D365 form OnLoad event would fail silently
-    test('TC-C11: OnLoad should be a function returning an object with OnFormLoad', () => {
-        expect(typeof global.contactsLib.OnLoad).toBe('function');
-        var onLoadModule = global.contactsLib.OnLoad();
-        expect(onLoadModule).toHaveProperty('OnFormLoad');
-        expect(typeof onLoadModule.OnFormLoad).toBe('function');
+    test('TC-C11: OnLoad should be an object with OnFormLoad', () => {
+        expect(typeof global.contactsLib.OnLoad).toBe('object');
+        expect(global.contactsLib.OnLoad).toHaveProperty('OnFormLoad');
+        expect(typeof global.contactsLib.OnLoad.OnFormLoad).toBe('function');
     });
 
     //* TC-C12: D365 calls this when the user changes the Preferred Contact Method dropdown
     //* The method name must match exactly what is registered in D365 form event configuration
-    test('TC-C12: OnChange should be a function returning an object with OnPreferredContactMethodChange', () => {
-        expect(typeof global.contactsLib.OnChange).toBe('function');
-        var onChangeModule = global.contactsLib.OnChange();
-        expect(onChangeModule).toHaveProperty('OnPreferredContactMethodChange');
-        expect(typeof onChangeModule.OnPreferredContactMethodChange).toBe('function');
+    test('TC-C12: OnChange should be an object with OnPreferredContactMethodChange', () => {
+        expect(typeof global.contactsLib.OnChange).toBe('object');
+        expect(global.contactsLib.OnChange).toHaveProperty('OnPreferredContactMethodChange');
+        expect(typeof global.contactsLib.OnChange.OnPreferredContactMethodChange).toBe('function');
     });
 
-    //* TC-C13: Even though OnFormSave is currently empty, the structure must exist so D365 can bind to it
-    test('TC-C13: OnSave should be a function returning an object with OnFormSave', () => {
-        expect(typeof global.contactsLib.OnSave).toBe('function');
-        var onSaveModule = global.contactsLib.OnSave();
-        expect(onSaveModule).toHaveProperty('OnFormSave');
-        expect(typeof onSaveModule.OnFormSave).toBe('function');
+    //* TC-C13: The structure must exist so D365 can bind to the OnFormSave handler
+    test('TC-C13: OnSave should be an object with OnFormSave', () => {
+        expect(typeof global.contactsLib.OnSave).toBe('object');
+        expect(global.contactsLib.OnSave).toHaveProperty('OnFormSave');
+        expect(typeof global.contactsLib.OnSave.OnFormSave).toBe('function');
     });
 });
 
@@ -103,7 +100,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
         });
 
         //* Invoke the OnFormLoad handler -- same call D365 makes when the Contact form opens
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         //* emailaddress1 should be "required" and mobilephone should be "none" for Email preference
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
@@ -123,7 +120,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
             }
         });
 
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -142,7 +139,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
             }
         });
 
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -160,7 +157,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
             }
         });
 
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -178,7 +175,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
             }
         });
 
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -197,7 +194,7 @@ describe('Contact OnLoad - setFieldRequriementByPreferedModeOfContact', () => {
             }
         });
 
-        global.contactsLib.OnLoad().OnFormLoad(executionContext);
+        global.contactsLib.OnLoad.OnFormLoad(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -218,7 +215,7 @@ describe('Contact Form - Defensive Edge Cases', () => {
     //* The code uses optional chaining (executionContext?.getFormContext()) which should handle this gracefully
     test('TC-C07: Null executionContext should not throw errors', () => {
         expect(() => {
-            global.contactsLib.OnLoad().OnFormLoad(null);
+            global.contactsLib.OnLoad.OnFormLoad(null);
         }).not.toThrow();
     });
 
@@ -229,7 +226,7 @@ describe('Contact Form - Defensive Edge Cases', () => {
         };
 
         expect(() => {
-            global.contactsLib.OnLoad().OnFormLoad(executionContext);
+            global.contactsLib.OnLoad.OnFormLoad(executionContext);
         }).not.toThrow();
 
         //* Verify getFormContext was called -- the function did attempt to get it before bailing out
@@ -257,7 +254,7 @@ describe('Contact OnChange - OnPreferredContactMethodChange', () => {
         });
 
         //* Call via OnChange handler instead of OnLoad -- different entry point, same underlying logic
-        global.contactsLib.OnChange().OnPreferredContactMethodChange(executionContext);
+        global.contactsLib.OnChange.OnPreferredContactMethodChange(executionContext);
 
         //* Assertions identical to TC-C01
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
@@ -276,7 +273,7 @@ describe('Contact OnChange - OnPreferredContactMethodChange', () => {
             }
         });
 
-        global.contactsLib.OnChange().OnPreferredContactMethodChange(executionContext);
+        global.contactsLib.OnChange.OnPreferredContactMethodChange(executionContext);
 
         expect(attributes[global.contactFieldLogicalNames.emailaddress1].setRequiredLevel)
             .toHaveBeenCalledWith(global.requiredLevel.None);
@@ -303,7 +300,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
             }
         });
 
-        global.contactsLib.OnSave().OnFormSave(executionContext);
+        global.contactsLib.OnSave.OnFormSave(executionContext);
 
         expect(eventArgs.preventDefault).toHaveBeenCalled();
         expect(ui.setFormNotification).toHaveBeenCalledWith(
@@ -322,7 +319,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
             }
         });
 
-        global.contactsLib.OnSave().OnFormSave(executionContext);
+        global.contactsLib.OnSave.OnFormSave(executionContext);
 
         expect(eventArgs.preventDefault).toHaveBeenCalled();
         expect(ui.setFormNotification).toHaveBeenCalled();
@@ -337,7 +334,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
             }
         });
 
-        global.contactsLib.OnSave().OnFormSave(executionContext);
+        global.contactsLib.OnSave.OnFormSave(executionContext);
 
         expect(eventArgs.preventDefault).not.toHaveBeenCalled();
         expect(ui.clearFormNotification).toHaveBeenCalledWith(
@@ -354,7 +351,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
             }
         });
 
-        global.contactsLib.OnSave().OnFormSave(executionContext);
+        global.contactsLib.OnSave.OnFormSave(executionContext);
 
         expect(eventArgs.preventDefault).not.toHaveBeenCalled();
         expect(ui.clearFormNotification).toHaveBeenCalledWith(
@@ -371,7 +368,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
             }
         });
 
-        global.contactsLib.OnSave().OnFormSave(executionContext);
+        global.contactsLib.OnSave.OnFormSave(executionContext);
 
         expect(eventArgs.preventDefault).not.toHaveBeenCalled();
         expect(ui.clearFormNotification).toHaveBeenCalledWith(
@@ -382,7 +379,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
     //* TC-C10e: Null executionContext should not throw -- same defensive pattern as OnLoad (TC-C07)
     test('TC-C10e: Null executionContext should not throw errors on save', () => {
         expect(() => {
-            global.contactsLib.OnSave().OnFormSave(null);
+            global.contactsLib.OnSave.OnFormSave(null);
         }).not.toThrow();
     });
 
@@ -393,7 +390,7 @@ describe('Contact OnSave - validateEmailOrPhoneBeforeSave', () => {
         };
 
         expect(() => {
-            global.contactsLib.OnSave().OnFormSave(executionContext);
+            global.contactsLib.OnSave.OnFormSave(executionContext);
         }).not.toThrow();
 
         expect(executionContext.getFormContext).toHaveBeenCalled();

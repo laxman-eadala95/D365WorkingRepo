@@ -6,7 +6,7 @@
 */
 
 using System;
-using CustomPlugins.Services;
+using D365.SalesPlugins.Services;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
 using Moq;

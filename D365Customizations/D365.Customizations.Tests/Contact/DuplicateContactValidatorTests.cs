@@ -5,7 +5,7 @@
 **     1. Cover EmailExists true/false, exception message, skip when email null, TopCount equals 1
 */
 
-using CustomPlugins.Services;
+using D365.SalesPlugins.Services;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;

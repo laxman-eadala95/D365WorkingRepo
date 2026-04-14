@@ -14,7 +14,7 @@ var opportunitiesLib = opportunitiesLib || {};
  * @param {*} executionContext 
  * @returns 
  */
-opportunitiesLib.OnLoad = function () {
+opportunitiesLib.OnLoad = (function (executionContext) {
 
     /**
      *  *This function is used to trigger the main onload custom function
@@ -30,12 +30,12 @@ opportunitiesLib.OnLoad = function () {
     return {
         OnFormLoad: onFormLoad
     };
-};
+})();
 
 /**
  * ! This section holds all the functions that have to be triggered on change events of fields
  */
-opportunitiesLib.OnChange = function () {
+opportunitiesLib.OnChange = (function (executionContext) {
 
     /**
      *  *This function is to toggle the status of Estimated Revenue field based on Opportunity Type
@@ -48,40 +48,31 @@ opportunitiesLib.OnChange = function () {
             toggleEstimatedRevenueStatusByOpportunityType(formContext);
     }
 
-    /**
-     *  *This function is to recalculate Estimated Revenue when any of the formula fields (Total Units, Unit Price, Discount) change
-     *  @param {*} executionContext 
-     */
-    const onEstimatedRevenueFieldsChange = (executionContext) => {
-        let formContext = executionContext?.getFormContext();
-        //Trigger only if the From Context from execution context have captured to prevent any errors
-        if(formContext)
-            recalculateEstimatedRevenueIfVariablePrice(formContext);
-    }
-
     return {
         OnOpportunityTypeChange: onOpportunityTypeChange,
-        OnEstimatedRevenueFieldsChange: onEstimatedRevenueFieldsChange,
     };
-};
+})();
 
 /**
  * ! This section hold all the functions that have to be triggered on form save event
  */
-opportunitiesLib.OnSave = function () {
+opportunitiesLib.OnSave = (function (executionContext) {
 
     /**
      * *This function is used to trigger the main onsave custom function
      * @param {Form execution context} executionContext 
      */
     const onFormSave = (executionContext) => {
-        
+        let formContext = executionContext?.getFormContext();
+        //Trigger only if the From Context from execution context have captured to prevent any errors
+        if(formContext)
+            toggleEstimatedRevenueStatusByOpportunityType(formContext);
     }
 
     return {
         OnFormSave: onFormSave
     };
-}
+})();
 //#endregion
 
 /**
@@ -127,18 +118,6 @@ const calculateEstimatedRevenueForVariablePrice = (formContext) => {
 
     let estimatedRevenue = (totalUnits * unitPrice) - discount;
     formContext?.getAttribute(opportunityFieldLogicalNames.estimatedvalue)?.setValue(estimatedRevenue);
-}
-
-/**
- *  *This function checks if the opportunity type is Variable Price before recalculating Estimated Revenue
- *  *It is called when any of the formula fields (Total Units, Unit Price, Discount) change on the form
- *  @param {formContext} formContext 
- */
-const recalculateEstimatedRevenueIfVariablePrice = (formContext) => {
-    let opportunityType = formContext?.getAttribute(opportunityFieldLogicalNames.opportunityTypeCode)?.getValue();
-    //! Only recalculate if the opportunity type is Variable Price since the formula only applies to that type
-    if(opportunityType === opportunityTypes.VariablePrice)
-        calculateEstimatedRevenueForVariablePrice(formContext);
 }
 
 //#endregion

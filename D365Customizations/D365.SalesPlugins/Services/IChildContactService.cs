@@ -7,7 +7,7 @@
 
 using System;
 
-namespace CustomPlugins.Services
+namespace D365.SalesPlugins.Services
 {
     /// <summary>
     /// Defines creation of a contact linked to an account with default naming rules.

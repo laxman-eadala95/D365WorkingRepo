@@ -18,3 +18,6 @@ Thumbs.db
 # IDE
 .vs/
 *.swp
+
+# MSBuild Binary and Structured Log
+*.binlog

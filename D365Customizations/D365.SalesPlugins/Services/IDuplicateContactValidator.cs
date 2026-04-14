@@ -6,7 +6,7 @@
 **     2. ValidateNoDuplicateEmail throws InvalidPluginExecutionException when duplicate
 */
 
-namespace CustomPlugins.Services
+namespace D365.SalesPlugins.Services
 {
     /// <summary>
     /// Validates that a contact email is not already in use by another contact.

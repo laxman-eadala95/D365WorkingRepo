@@ -6,11 +6,11 @@
 **     2. Call DuplicateContactValidator to query Dataverse and throw if duplicate
 */
 
-using CustomPlugins.Services;
+using D365.SalesPlugins.Services;
 using D365.Plugins.Common.Base;
 using D365.Plugins.Common.Constants;
 
-namespace CustomPlugins
+namespace D365.SalesPlugins
 {
     /// <summary>
     /// Registered on Contact Create (Pre-validation).

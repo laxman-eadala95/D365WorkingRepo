@@ -6,7 +6,7 @@
 **     2. Duplicate email throws InvalidPluginExecutionException
 */
 
-using CustomPlugins;
+using D365.SalesPlugins;
 using D365.Customizations.Tests.Helpers;
 using D365.Plugins.Common.Constants;
 using Microsoft.Xrm.Sdk;
