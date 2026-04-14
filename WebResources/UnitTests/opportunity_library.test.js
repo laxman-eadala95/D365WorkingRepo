@@ -23,7 +23,7 @@ describe('Opportunity Constants Validation', () => {
     //* TC-K04: These must match the exact logical names in the D365 Opportunity entity schema
     //* Even a single character difference would cause getAttribute() or getControl() to return null
     test('TC-K04: opportunityFieldLogicalNames should have correct D365 schema names', () => {
-        expect(global.opportunityFieldLogicalNames.estimatedvalue).toBe("estimatedvalue");
+        expect(global.opportunityFieldLogicalNames.estimatedvalue).toBe("le_estimatedrevenue");
         expect(global.opportunityFieldLogicalNames.opportunityTypeCode).toBe("le_opportunitytypecode");
         expect(global.opportunityFieldLogicalNames.totalunits).toBe("le_totalunits");
         expect(global.opportunityFieldLogicalNames.priceperunit).toBe("le_priceperunit");
@@ -55,10 +55,13 @@ describe('opportunitiesLib Module Structure', () => {
     });
 
     //* TC-O11: D365 calls OnOpportunityTypeChange when the user changes the Opportunity Type dropdown
-    test('TC-O11: OnChange should expose OnOpportunityTypeChange', () => {
+    //* OnFormulaFieldChange is registered on totalunits, priceperunit, discountamount fields
+    test('TC-O11: OnChange should expose OnOpportunityTypeChange and OnFormulaFieldChange', () => {
         expect(typeof global.opportunitiesLib.OnChange).toBe('object');
         expect(global.opportunitiesLib.OnChange).toHaveProperty('OnOpportunityTypeChange');
         expect(typeof global.opportunitiesLib.OnChange.OnOpportunityTypeChange).toBe('function');
+        expect(global.opportunitiesLib.OnChange).toHaveProperty('OnFormulaFieldChange');
+        expect(typeof global.opportunitiesLib.OnChange.OnFormulaFieldChange).toBe('function');
     });
 
     //* TC-O12: The structure must exist so D365 can bind to the OnFormSave handler
@@ -336,6 +339,129 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
         //* (8 * 50) - 25 = 375
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(375);
+    });
+});
+
+//#endregion
+
+//! This region validates the OnFormulaFieldChange handler
+//! When Total Units, Price Per Unit, or Discount change and the type is Variable Price, Estimated Revenue should be recalculated
+//#region OnChange_FormulaFields_Tests
+
+describe('Opportunity OnChange - OnFormulaFieldChange', () => {
+
+    //* TC-O13a: When a formula field changes and type is Variable Price the Estimated Revenue should be recalculated
+    //* (5 * 200) - 100 = 900
+    test('TC-O13a: Formula field change when VariablePrice should recalculate Estimated Revenue', () => {
+        var { executionContext, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
+                [global.opportunityFieldLogicalNames.totalunits]: 5,
+                [global.opportunityFieldLogicalNames.priceperunit]: 200,
+                [global.opportunityFieldLogicalNames.discountamount]: 100,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+        });
+
+        global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .toHaveBeenCalledWith(900);
+    });
+
+    //* TC-O13b: When a formula field changes but type is Fixed Price the Estimated Revenue should NOT be recalculated
+    //* The formula only applies to Variable Price opportunities
+    test('TC-O13b: Formula field change when FixedPrice should not recalculate Estimated Revenue', () => {
+        var { executionContext, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
+                [global.opportunityFieldLogicalNames.totalunits]: 5,
+                [global.opportunityFieldLogicalNames.priceperunit]: 200,
+                [global.opportunityFieldLogicalNames.discountamount]: 100,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+        });
+
+        global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
+    });
+
+    //* TC-O13c: When a formula field changes but type is null (no type selected) the Estimated Revenue should NOT be recalculated
+    test('TC-O13c: Formula field change when null type should not recalculate Estimated Revenue', () => {
+        var { executionContext, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: null,
+                [global.opportunityFieldLogicalNames.totalunits]: 5,
+                [global.opportunityFieldLogicalNames.priceperunit]: 200,
+                [global.opportunityFieldLogicalNames.discountamount]: 100,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+        });
+
+        global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
+    });
+
+    //* TC-O13d: When formula fields are null they should default to 0 so the math does not break
+    //* (0 * 0) - 0 = 0
+    test('TC-O13d: VariablePrice with null formula fields should calculate as 0', () => {
+        var { executionContext, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
+                [global.opportunityFieldLogicalNames.totalunits]: null,
+                [global.opportunityFieldLogicalNames.priceperunit]: null,
+                [global.opportunityFieldLogicalNames.discountamount]: null,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+        });
+
+        global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .toHaveBeenCalledWith(0);
+    });
+
+    //* TC-O13e: When only some formula fields are filled the null ones should default to 0
+    //* (10 * 50) - 0 = 500
+    test('TC-O13e: VariablePrice with partial formula fields should handle nulls as 0', () => {
+        var { executionContext, attributes } = createMockContext({
+            attributeValues: {
+                [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
+                [global.opportunityFieldLogicalNames.totalunits]: 10,
+                [global.opportunityFieldLogicalNames.priceperunit]: 50,
+                [global.opportunityFieldLogicalNames.discountamount]: null,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
+            },
+        });
+
+        global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .toHaveBeenCalledWith(500);
+    });
+
+    //* TC-O13f: Null executionContext should not throw -- defensive edge case
+    test('TC-O13f: Null executionContext should not throw errors on formula field change', () => {
+        expect(() => {
+            global.opportunitiesLib.OnChange.OnFormulaFieldChange(null);
+        }).not.toThrow();
+    });
+
+    //* TC-O13g: Null formContext should exit early without recalculating
+    test('TC-O13g: Null formContext should exit early without calling setValue', () => {
+        var executionContext = {
+            getFormContext: jest.fn().mockReturnValue(null),
+        };
+
+        expect(() => {
+            global.opportunitiesLib.OnChange.OnFormulaFieldChange(executionContext);
+        }).not.toThrow();
+
+        expect(executionContext.getFormContext).toHaveBeenCalled();
     });
 });
 

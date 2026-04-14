@@ -48,8 +48,25 @@ opportunitiesLib.OnChange = (function (executionContext) {
             toggleEstimatedRevenueStatusByOpportunityType(formContext);
     }
 
+    /**
+     *  *This function recalculates Estimated Revenue when Total Units, Price Per Unit, or Discount change
+     *  *Only recalculates when the Opportunity Type is Variable Price since the formula does not apply to other types
+     *  @param {*} executionContext 
+     */
+    const onFormulaFieldChange = (executionContext) => {
+        let formContext = executionContext?.getFormContext();
+        //Trigger only if the From Context from execution context have captured to prevent any errors
+        if(formContext) {
+            let opportunityType = formContext?.getAttribute(opportunityFieldLogicalNames.opportunityTypeCode)?.getValue();
+            //! Only recalculate if the opportunity type is Variable Price since the formula only applies to that type
+            if(opportunityType === opportunityTypes.VariablePrice)
+                calculateEstimatedRevenueForVariablePrice(formContext);
+        }
+    }
+
     return {
         OnOpportunityTypeChange: onOpportunityTypeChange,
+        OnFormulaFieldChange: onFormulaFieldChange,
     };
 })();
 

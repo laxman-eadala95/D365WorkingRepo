@@ -65,7 +65,7 @@ const contactFormNotifications = {
  *  *Used by opportunity_library for Estimated Revenue, Opportunity Type, and variable-price formula fields
  */
 const opportunityFieldLogicalNames = {
-    estimatedvalue: "estimatedvalue",
+    estimatedvalue: "le_estimatedrevenue",
     opportunityTypeCode: "le_opportunitytypecode",
     totalunits: "le_totalunits",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
     priceperunit: "le_priceperunit",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
