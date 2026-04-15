@@ -20,8 +20,14 @@ namespace D365.Plugins.Common.Base
     public abstract class PluginBase : IPlugin
     {
         /// <summary>
+        /// Maximum allowed pipeline depth. Override in a derived plugin if a deeper chain is expected.
+        /// D365 enforces a hard limit of 8; this default provides an earlier, clearer exit.
+        /// </summary>
+        protected virtual int MaxDepth => 4;
+
+        /// <summary>
         /// Plugin pipeline entry. Extracts services from <see cref="IServiceProvider"/>,
-        /// validates <c>InputParameters["Target"]</c>, and calls <see cref="ExecuteBusinessLogic"/>.
+        /// validates depth and <c>InputParameters["Target"]</c>, and calls <see cref="ExecuteBusinessLogic"/>.
         /// </summary>
         /// <param name="serviceProvider">Runtime service provider supplied by the platform.</param>
         public void Execute(IServiceProvider serviceProvider)
@@ -29,6 +35,12 @@ namespace D365.Plugins.Common.Base
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
             var tracing = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
             var factory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+
+            if (context.Depth > MaxDepth)
+            {
+                tracing.Trace("PluginBase: Depth {0} exceeds max {1}. Exiting.", context.Depth, MaxDepth);
+                return;
+            }
 
             // No Target or wrong type: nothing to process (avoids null reference downstream).
             if (!context.InputParameters.Contains("Target"))

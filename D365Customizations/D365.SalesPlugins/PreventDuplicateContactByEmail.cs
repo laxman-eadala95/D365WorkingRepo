@@ -20,10 +20,15 @@ namespace D365.SalesPlugins
     {
         /// <inheritdoc />
         /// <remarks>
-        /// Skips non-contact entities. Empty email is not validated (allows creates without email).
+        /// Skips non-contact entities and nested plugin calls (depth > 1) so that programmatic
+        /// creates from other plugins (e.g. child contact from account) are not blocked.
+        /// Empty email is not validated (allows creates without email).
         /// </remarks>
         protected override void ExecuteBusinessLogic(LocalPluginContext localContext)
         {
+            if (localContext.Context.Depth > 1)
+                return;
+
             if (localContext.Target.LogicalName != ContactConstants.EntityLogicalName)
                 return;
 

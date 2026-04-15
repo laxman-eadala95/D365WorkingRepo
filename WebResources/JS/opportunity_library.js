@@ -99,7 +99,7 @@ opportunitiesLib.OnSave = (function (executionContext) {
 
 /**
  *  *This is a utility function used to toggle the status of Estimated Revenue field based on Opportunity Type
- *  *For Fixed Price and Variable Price the field is disabled, for all other types it is enabled
+ *  *For Fixed Price the field is disabled, for Variable Price and all other types it is enabled
  *  @param {formContext} formContext 
  */
 const toggleEstimatedRevenueStatusByOpportunityType = (formContext) => {
@@ -107,28 +107,35 @@ const toggleEstimatedRevenueStatusByOpportunityType = (formContext) => {
 
     //! Use switch case based on the opportunity type to keep it more scalable and cleaner
     switch (opportunityType) {
-        //! If opportunity type is Fixed Price disable the Estimated Revenue field since it is predetermined
+        //! If opportunity type is Fixed Price disable the Estimated Revenue field since it is predetermined and set the isrevenuesystemcalculated to SystemCalculated
         case opportunityTypes.FixedPrice:
             formContext?.getControl(opportunityFieldLogicalNames.estimatedvalue)?.setDisabled(true);
+            formContext?.getAttribute(opportunityFieldLogicalNames.isrevenuesystemcalculated)?.setValue(isrevenuesystemcalculated.SystemCalculated);
             break;
-        //! If opportunity type is Variable Price disable the field and auto-calculate using the formula
+        //! If opportunity type is Variable Price enable the Estimated Revenue field, set the isrevenuesystemcalculated to UserProvided and auto-calculate using the formula
         case opportunityTypes.VariablePrice:
-            formContext?.getControl(opportunityFieldLogicalNames.estimatedvalue)?.setDisabled(true);
+            formContext?.getControl(opportunityFieldLogicalNames.estimatedvalue)?.setDisabled(false);
+            formContext?.getAttribute(opportunityFieldLogicalNames.isrevenuesystemcalculated)?.setValue(isrevenuesystemcalculated.UserProvided);
             calculateEstimatedRevenueForVariablePrice(formContext);
             break;
-        //! For all other types enable the Estimated Revenue field for manual entry
+        //! For all other types enable the Estimated Revenue field for manual entry and set the isrevenuesystemcalculated to SystemCalculated
         default:
             formContext?.getControl(opportunityFieldLogicalNames.estimatedvalue)?.setDisabled(false);
+            formContext?.getAttribute(opportunityFieldLogicalNames.isrevenuesystemcalculated)?.setValue(isrevenuesystemcalculated.SystemCalculated);
             break;
     }
 }
 
 /**
  *  *This function calculates Estimated Revenue using the formula: (Total Units * Unit Price) - Discount
+ *  *Only runs when Opportunity Type is Variable Price; exits early for all other types as a safety guard
  *  *Null or empty field values default to 0 so the math does not break
  *  @param {formContext} formContext 
  */
 const calculateEstimatedRevenueForVariablePrice = (formContext) => {
+    let opportunityType = formContext?.getAttribute(opportunityFieldLogicalNames.opportunityTypeCode)?.getValue();
+    if(opportunityType !== opportunityTypes.VariablePrice) return;
+
     let totalUnits = formContext?.getAttribute(opportunityFieldLogicalNames.totalunits)?.getValue() || 0;
     let unitPrice = formContext?.getAttribute(opportunityFieldLogicalNames.priceperunit)?.getValue() || 0;
     let discount = formContext?.getAttribute(opportunityFieldLogicalNames.discountamount)?.getValue() || 0;

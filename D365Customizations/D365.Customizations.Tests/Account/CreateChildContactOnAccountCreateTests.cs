@@ -39,5 +39,41 @@ namespace D365.Customizations.Tests.Account
                 o => o.Create(It.Is<Entity>(e => e.LogicalName == "contact")),
                 Times.Once);
         }
+
+        /// <summary>Depth exceeding MaxDepth should skip child contact creation entirely.</summary>
+        [Fact]
+        public void DepthExceedsMax_SkipsChildContactCreation()
+        {
+            var accountId = Guid.NewGuid();
+            var target = new Entity(AccountConstants.EntityLogicalName) { Id = accountId };
+            target[AccountConstants.AttributeName] = "Fabrikam";
+
+            var mock = PluginMockFactory.Create(target, "Create", 40, accountId, depth: 5);
+
+            new CreateChildContactOnAccountCreate().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.Create(It.IsAny<Entity>()), Times.Never);
+        }
+
+        /// <summary>Depth 1 (user-initiated) should still create the child contact normally.</summary>
+        [Fact]
+        public void DepthOne_CreatesChildContact()
+        {
+            var accountId = Guid.NewGuid();
+            var target = new Entity(AccountConstants.EntityLogicalName) { Id = accountId };
+            target[AccountConstants.AttributeName] = "Contoso";
+
+            var mock = PluginMockFactory.Create(target, "Create", 40, accountId, depth: 1);
+            mock.OrganizationService
+                .Setup(o => o.Create(It.IsAny<Entity>()))
+                .Returns(Guid.NewGuid());
+
+            new CreateChildContactOnAccountCreate().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.Create(It.Is<Entity>(e => e.LogicalName == "contact")),
+                Times.Once);
+        }
     }
 }

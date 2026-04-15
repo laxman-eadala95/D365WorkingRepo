@@ -42,5 +42,44 @@ namespace D365.Customizations.Tests.Base
 
             Assert.Equal(0, plugin.CallCount);
         }
+
+        /// <summary>Depth exceeding MaxDepth (default 4) should skip business logic to prevent runaway chains.</summary>
+        [Fact]
+        public void DepthExceedsMax_SkipsBusinessLogic()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName);
+            var mock = PluginMockFactory.Create(target, "Create", 10, depth: 5);
+
+            var plugin = new TestPlugin();
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(0, plugin.CallCount);
+        }
+
+        /// <summary>Depth at the limit (4) should still execute business logic.</summary>
+        [Fact]
+        public void DepthAtMax_CallsBusinessLogic()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName);
+            var mock = PluginMockFactory.Create(target, "Create", 10, depth: 4);
+
+            var plugin = new TestPlugin();
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(1, plugin.CallCount);
+        }
+
+        /// <summary>Depth 1 (user-initiated) should execute business logic normally.</summary>
+        [Fact]
+        public void DepthOne_CallsBusinessLogic()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName);
+            var mock = PluginMockFactory.Create(target, "Create", 10, depth: 1);
+
+            var plugin = new TestPlugin();
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(1, plugin.CallCount);
+        }
     }
 }

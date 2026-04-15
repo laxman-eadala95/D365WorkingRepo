@@ -42,7 +42,8 @@ namespace D365.Customizations.Tests.Helpers
         /// <param name="message">Pipeline message name (e.g. Create).</param>
         /// <param name="stage">Pipeline stage (e.g. 10 Pre-validation, 40 Post-operation).</param>
         /// <param name="primaryEntityId">Overrides primary entity id; defaults to target.Id or a new guid.</param>
-        public static PluginMockContext Create(Entity target, string message, int stage, Guid? primaryEntityId = null)
+        /// <param name="depth">Pipeline depth (1 = user-initiated, >1 = nested plugin call).</param>
+        public static PluginMockContext Create(Entity target, string message, int stage, Guid? primaryEntityId = null, int depth = 1)
         {
             var orgService = new Mock<IOrganizationService>(MockBehavior.Strict);
             var tracing = new Mock<ITracingService>(MockBehavior.Loose);
@@ -57,6 +58,7 @@ namespace D365.Customizations.Tests.Helpers
 
             context.SetupGet(c => c.MessageName).Returns(message);
             context.SetupGet(c => c.Stage).Returns(stage);
+            context.SetupGet(c => c.Depth).Returns(depth);
             context.SetupGet(c => c.UserId).Returns(Guid.NewGuid());
             context.SetupGet(c => c.PrimaryEntityId).Returns(entityId);
             context.SetupGet(c => c.InputParameters).Returns(inputParams);

@@ -65,11 +65,12 @@ const contactFormNotifications = {
  *  *Used by opportunity_library for Estimated Revenue, Opportunity Type, and variable-price formula fields
  */
 const opportunityFieldLogicalNames = {
-    estimatedvalue: "le_estimatedrevenue",
+    estimatedvalue: "estimatedvalue",
     opportunityTypeCode: "le_opportunitytypecode",
     totalunits: "le_totalunits",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
     priceperunit: "le_priceperunit",//Minimum value is set to 1 in the field metadata to prevent setting the field to 0 which will break the formula
     discountamount: "discountamount",
+    isrevenuesystemcalculated: "isrevenuesystemcalculated"
 }
 
 /**
@@ -81,4 +82,12 @@ const opportunityTypes = {
     "VariablePrice": 2,
 }
 
+/**
+ *  *Boolean values for whether Estimated Revenue is entered by the user (false) or derived by the system (true)
+ *  *Must stay in sync with the field metadata on Opportunity; used with opportunity revenue lock and calculation logic
+ */
+const isrevenuesystemcalculated = {
+    "UserProvided": false,
+    "SystemCalculated": true
+}
 //#endregion

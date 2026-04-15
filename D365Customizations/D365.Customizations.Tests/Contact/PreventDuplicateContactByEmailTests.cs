@@ -51,5 +51,43 @@ namespace D365.Customizations.Tests.Contact
             Assert.Throws<InvalidPluginExecutionException>(
                 () => new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object));
         }
+
+        /// <summary>
+        /// Nested plugin call (depth 2) should skip duplicate validation entirely.
+        /// Simulates the scenario where CreateChildContactOnAccountCreate triggers a contact create
+        /// that would otherwise be blocked by the duplicate check.
+        /// </summary>
+        [Fact]
+        public void NestedCall_SkipsDuplicateValidation()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName);
+            target[ContactConstants.AttributeEmailAddress1] = "dup@example.com";
+
+            var mock = PluginMockFactory.Create(target, "Create", 10, depth: 2);
+
+            new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Depth 1 (user-initiated) with duplicate email should still throw.
+        /// Ensures the depth check does not accidentally disable validation for direct user creates.
+        /// </summary>
+        [Fact]
+        public void DepthOne_DuplicateEmail_StillThrows()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName);
+            target[ContactConstants.AttributeEmailAddress1] = "dup@example.com";
+
+            var mock = PluginMockFactory.Create(target, "Create", 10, depth: 1);
+            mock.OrganizationService
+                .Setup(o => o.RetrieveMultiple(It.IsAny<QueryBase>()))
+                .Returns(new EntityCollection(new[] { new Entity("contact") }));
+
+            Assert.Throws<InvalidPluginExecutionException>(
+                () => new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object));
+        }
     }
 }

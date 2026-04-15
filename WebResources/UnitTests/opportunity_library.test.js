@@ -23,11 +23,12 @@ describe('Opportunity Constants Validation', () => {
     //* TC-K04: These must match the exact logical names in the D365 Opportunity entity schema
     //* Even a single character difference would cause getAttribute() or getControl() to return null
     test('TC-K04: opportunityFieldLogicalNames should have correct D365 schema names', () => {
-        expect(global.opportunityFieldLogicalNames.estimatedvalue).toBe("le_estimatedrevenue");
+        expect(global.opportunityFieldLogicalNames.estimatedvalue).toBe("estimatedvalue");
         expect(global.opportunityFieldLogicalNames.opportunityTypeCode).toBe("le_opportunitytypecode");
         expect(global.opportunityFieldLogicalNames.totalunits).toBe("le_totalunits");
         expect(global.opportunityFieldLogicalNames.priceperunit).toBe("le_priceperunit");
         expect(global.opportunityFieldLogicalNames.discountamount).toBe("discountamount");
+        expect(global.opportunityFieldLogicalNames.isrevenuesystemcalculated).toBe("isrevenuesystemcalculated");
     });
 
     //* TC-K05: These integer values come from the D365 Opportunity Type option set and must match exactly
@@ -35,6 +36,13 @@ describe('Opportunity Constants Validation', () => {
     test('TC-K05: opportunityTypes should have correct option set values', () => {
         expect(global.opportunityTypes.FixedPrice).toBe(1);
         expect(global.opportunityTypes.VariablePrice).toBe(2);
+    });
+
+    //* TC-K06: These boolean values come from the D365 isrevenuesystemcalculated field
+    //* Used by toggleEstimatedRevenueStatusByOpportunityType to flag whether revenue is user-entered or system-derived
+    test('TC-K06: isrevenuesystemcalculated should have correct boolean values', () => {
+        expect(global.isrevenuesystemcalculated.UserProvided).toBe(false);
+        expect(global.isrevenuesystemcalculated.SystemCalculated).toBe(true);
     });
 });
 
@@ -80,13 +88,14 @@ describe('opportunitiesLib Module Structure', () => {
 
 describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', () => {
 
-    //* TC-O01: When opportunity type is FixedPrice (1), the Estimated Revenue control should be disabled
+    //* TC-O01: When opportunity type is FixedPrice (1), the Estimated Revenue control should be disabled and no calculation should run
     //* Business rule: Fixed price opportunities have a predetermined revenue -- users should not be able to change it
-    test('TC-O01: FixedPrice opportunity type should disable the Estimated Revenue field', () => {
+    test('TC-O01: FixedPrice opportunity type should disable the Estimated Revenue field and not calculate', () => {
         //* We need both an attribute (to read the type value) and a control (to disable the UI element)
-        var { executionContext, controls } = createMockContext({
+        var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
             },
             controlStates: {
                 [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
@@ -98,15 +107,19 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
         //* (opportunityType === opportunityTypes.FixedPrice) evaluates to true, so setDisabled(true) is expected
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
+        //* The calculation guard inside calculateEstimatedRevenueForVariablePrice should prevent setValue from being called
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
     });
 
-    //* TC-O02: When opportunity type is NOT FixedPrice, the Estimated Revenue control should be enabled
-    //* Any value other than 1 (FixedPrice) should keep the revenue field editable
-    test('TC-O02: Non-FixedPrice opportunity type should enable the Estimated Revenue field', () => {
-        //* Using value 99 as an arbitrary non-FixedPrice type to prove the comparison is strict
-        var { executionContext, controls } = createMockContext({
+    //* TC-O02: When opportunity type is NOT FixedPrice or VariablePrice, the Estimated Revenue control should be enabled and no calculation should run
+    //* Any value other than 1 (FixedPrice) or 2 (VariablePrice) should keep the revenue field editable without auto-calculation
+    test('TC-O02: Non-FixedPrice/VariablePrice type should enable the Estimated Revenue field and not calculate', () => {
+        //* Using value 99 as an arbitrary type to prove the comparison is strict
+        var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: 99,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
             },
             controlStates: {
                 [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
@@ -115,9 +128,12 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
 
         global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
-        //* (99 === 1) is false, so setDisabled(false) -- field stays editable
+        //* (99 === 1) is false and (99 === 2) is false, so setDisabled(false) -- field stays editable
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(false);
+        //* The calculation guard should prevent setValue from being called for non-VariablePrice types
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
     });
 
     //* TC-O03: A new opportunity might not have a type selected yet (null)
@@ -156,9 +172,9 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
             .toHaveBeenCalledWith(false);
     });
 
-    //* TC-O04a: When opportunity type is Variable Price the Estimated Revenue field should be disabled and auto-calculated
+    //* TC-O04a: When opportunity type is Variable Price the Estimated Revenue field should be enabled and auto-calculated
     //* Formula: Estimated Revenue = (Total Units * Unit Price) - Discount = (10 * 100) - 50 = 950
-    test('TC-O04a: VariablePrice should disable Estimated Revenue and auto-calculate using the formula', () => {
+    test('TC-O04a: VariablePrice should enable Estimated Revenue and auto-calculate using the formula', () => {
         var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
@@ -175,7 +191,7 @@ describe('Opportunity OnLoad - toggleEstimatedRevenueStatusByOpportunityType', (
         global.opportunitiesLib.OnLoad.OnFormLoad(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
-            .toHaveBeenCalledWith(true);
+            .toHaveBeenCalledWith(false);
         //* (10 * 100) - 50 = 950
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(950);
@@ -281,11 +297,12 @@ describe('Opportunity Form - Defensive Edge Cases', () => {
 describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
 
     //* TC-O05a: OnChange with FixedPrice should produce the same result as OnLoad with FixedPrice (TC-O01)
-    //* When a user changes the dropdown to "Fixed Price" on a live form, the field must be immediately disabled
-    test('TC-O05a: OnChange with FixedPrice should disable Estimated Revenue (mirrors TC-O01)', () => {
-        var { executionContext, controls } = createMockContext({
+    //* When a user changes the dropdown to "Fixed Price" on a live form, the field must be immediately disabled and no calculation should run
+    test('TC-O05a: OnChange with FixedPrice should disable Estimated Revenue and not calculate (mirrors TC-O01)', () => {
+        var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
             },
             controlStates: {
                 [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
@@ -297,6 +314,8 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
     });
 
     //* TC-O05b: OnChange with non-FixedPrice should produce the same result as TC-O02
@@ -317,8 +336,8 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
             .toHaveBeenCalledWith(false);
     });
 
-    //* TC-O05c: OnChange with VariablePrice should disable the field and auto-calculate (mirrors TC-O04a)
-    test('TC-O05c: OnChange with VariablePrice should disable and auto-calculate Estimated Revenue', () => {
+    //* TC-O05c: OnChange with VariablePrice should enable the field and auto-calculate (mirrors TC-O04a)
+    test('TC-O05c: OnChange with VariablePrice should enable and auto-calculate Estimated Revenue', () => {
         var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
@@ -335,7 +354,7 @@ describe('Opportunity OnChange - OnOpportunityTypeChange', () => {
         global.opportunitiesLib.OnChange.OnOpportunityTypeChange(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
-            .toHaveBeenCalledWith(true);
+            .toHaveBeenCalledWith(false);
         //* (8 * 50) - 25 = 375
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(375);
@@ -482,12 +501,13 @@ describe('Opportunity OnSave - toggleEstimatedRevenueStatusByOpportunityType', (
         }).not.toThrow();
     });
 
-    //* TC-O06a: OnSave with FixedPrice should disable Estimated Revenue (mirrors TC-O01)
+    //* TC-O06a: OnSave with FixedPrice should disable Estimated Revenue and not calculate (mirrors TC-O01)
     //* On save the toggle logic must run so the field state stays consistent with the opportunity type
-    test('TC-O06a: OnSave with FixedPrice should disable Estimated Revenue (mirrors TC-O01)', () => {
-        var { executionContext, controls } = createMockContext({
+    test('TC-O06a: OnSave with FixedPrice should disable Estimated Revenue and not calculate (mirrors TC-O01)', () => {
+        var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.FixedPrice,
+                [global.opportunityFieldLogicalNames.estimatedvalue]: null,
             },
             controlStates: {
                 [global.opportunityFieldLogicalNames.estimatedvalue]: { disabled: false },
@@ -498,11 +518,13 @@ describe('Opportunity OnSave - toggleEstimatedRevenueStatusByOpportunityType', (
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
             .toHaveBeenCalledWith(true);
+        expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
+            .not.toHaveBeenCalled();
     });
 
-    //* TC-O06b: OnSave with VariablePrice should disable and auto-calculate Estimated Revenue (mirrors TC-O04a)
+    //* TC-O06b: OnSave with VariablePrice should enable and auto-calculate Estimated Revenue (mirrors TC-O04a)
     //* Formula: (Total Units * Unit Price) - Discount = (4 * 250) - 100 = 900
-    test('TC-O06b: OnSave with VariablePrice should disable and auto-calculate Estimated Revenue', () => {
+    test('TC-O06b: OnSave with VariablePrice should enable and auto-calculate Estimated Revenue', () => {
         var { executionContext, controls, attributes } = createMockContext({
             attributeValues: {
                 [global.opportunityFieldLogicalNames.opportunityTypeCode]: global.opportunityTypes.VariablePrice,
@@ -519,7 +541,7 @@ describe('Opportunity OnSave - toggleEstimatedRevenueStatusByOpportunityType', (
         global.opportunitiesLib.OnSave.OnFormSave(executionContext);
 
         expect(controls[global.opportunityFieldLogicalNames.estimatedvalue].setDisabled)
-            .toHaveBeenCalledWith(true);
+            .toHaveBeenCalledWith(false);
         //* (4 * 250) - 100 = 900
         expect(attributes[global.opportunityFieldLogicalNames.estimatedvalue].setValue)
             .toHaveBeenCalledWith(900);
