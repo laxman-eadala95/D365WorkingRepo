@@ -18,7 +18,7 @@ namespace D365.Customizations.Tests.Helpers
     public static class PluginMockFactory
     {
         /// <summary>
-        /// Exposes the mocks returned by <see cref="Create"/> for further Setup/Verify in tests.
+        /// Exposes the mocks returned by Create for further Setup/Verify in tests.
         /// </summary>
         public class PluginMockContext
         {

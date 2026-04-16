@@ -20,7 +20,7 @@ namespace D365.SalesPlugins.Services
         bool EmailExists(string email);
 
         /// <summary>
-        /// Throws <see cref="InvalidPluginExecutionException"/> with a user message if the email is duplicate;
+        /// Throws InvalidPluginExecutionException with a user message if the email is duplicate;
         /// no-ops when email is null or whitespace.
         /// </summary>
         /// <param name="email">Email from the creating contact.</param>

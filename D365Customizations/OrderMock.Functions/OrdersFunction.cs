@@ -25,7 +25,7 @@ namespace OrderMock.Functions
         private readonly ILogger<OrdersFunction> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OrdersFunction"/> class.
+        /// Initializes a new instance of the OrdersFunction class.
         /// </summary>
         /// <param name="logger">Host-injected logger for request diagnostics.</param>
         public OrdersFunction(ILogger<OrdersFunction> logger)

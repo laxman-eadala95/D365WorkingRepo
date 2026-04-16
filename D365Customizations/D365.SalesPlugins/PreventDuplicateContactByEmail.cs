@@ -14,11 +14,10 @@ namespace D365.SalesPlugins
 {
     /// <summary>
     /// Registered on Contact Create (Pre-validation).
-    /// Throws <see cref="InvalidPluginExecutionException"/> if another contact already has the same email.
+    /// Throws InvalidPluginExecutionException if another contact already has the same email.
     /// </summary>
     public class PreventDuplicateContactByEmail : PluginBase
     {
-        /// <inheritdoc />
         /// <remarks>
         /// Skips non-contact entities and nested plugin calls (depth > 1) so that programmatic
         /// creates from other plugins (e.g. child contact from account) are not blocked.

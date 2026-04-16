@@ -14,7 +14,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Base
 {
     /// <summary>
-    /// Unit tests for <see cref="D365.Plugins.Common.Base.PluginBase"/> guard behavior and delegation.
+    /// Unit tests for PluginBase guard behavior and delegation.
     /// </summary>
     public class PluginBaseTests
     {

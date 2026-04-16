@@ -14,14 +14,14 @@ namespace D365.SalesPlugins.Services
 {
     /// <summary>
     /// Checks whether a contact with the given email already exists in Dataverse.
-    /// Uses <see cref="QueryExpression.TopCount"/> = 1 and a single-column <see cref="ColumnSet"/> for efficiency.
+    /// Uses QueryExpression.TopCount = 1 and a single-column ColumnSet for efficiency.
     /// </summary>
     public class DuplicateContactValidator : IDuplicateContactValidator
     {
         private readonly IOrganizationService _service;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DuplicateContactValidator"/> class.
+        /// Initializes a new instance of the DuplicateContactValidator class.
         /// </summary>
         /// <param name="service">Organization service used for RetrieveMultiple.</param>
         public DuplicateContactValidator(IOrganizationService service)
@@ -29,7 +29,6 @@ namespace D365.SalesPlugins.Services
             _service = service;
         }
 
-        /// <inheritdoc />
         public bool EmailExists(string email)
         {
             var query = new QueryExpression(ContactConstants.EntityLogicalName)
@@ -52,7 +51,6 @@ namespace D365.SalesPlugins.Services
             return results.Entities.Count > 0;
         }
 
-        /// <inheritdoc />
         public void ValidateNoDuplicateEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

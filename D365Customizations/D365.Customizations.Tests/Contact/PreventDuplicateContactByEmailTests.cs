@@ -17,7 +17,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Contact
 {
     /// <summary>
-    /// Integration-style tests for <see cref="PreventDuplicateContactByEmail"/> against <see cref="PluginMockFactory"/>.
+    /// Integration-style tests for PreventDuplicateContactByEmail against PluginMockFactory.
     /// </summary>
     public class PreventDuplicateContactByEmailTests
     {

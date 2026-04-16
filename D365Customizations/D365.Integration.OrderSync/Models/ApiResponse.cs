@@ -18,7 +18,7 @@ namespace D365.Integration.OrderSync.Models
         /// <summary>HTTP status code, or 0 when the request failed before a response (e.g. network error).</summary>
         public int StatusCode { get; set; }
 
-        /// <summary>Response body or exception message when <see cref="IsSuccess"/> is false.</summary>
+        /// <summary>Response body or exception message when IsSuccess is false.</summary>
         public string ErrorMessage { get; set; }
     }
 }

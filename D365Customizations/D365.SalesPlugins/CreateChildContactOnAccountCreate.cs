@@ -15,14 +15,12 @@ namespace D365.SalesPlugins
 {
     /// <summary>
     /// Registered on Account Create (Post-operation).
-    /// Creates a child <see cref="ContactConstants.EntityLogicalName"/> with first name
-    /// <see cref="ContactConstants.DefaultFirstName"/> and last name taken from the account name.
+    /// Creates a child contact with default first name and last name taken from the account name.
     /// </summary>
     public class CreateChildContactOnAccountCreate : PluginBase
     {
-        /// <inheritdoc />
         /// <remarks>
-        /// Ignores non-account targets, empty primary id, and delegates creation to <see cref="ChildContactService"/>.
+        /// Ignores non-account targets, empty primary id, and delegates creation to ChildContactService.
         /// </remarks>
         protected override void ExecuteBusinessLogic(LocalPluginContext localContext)
         {

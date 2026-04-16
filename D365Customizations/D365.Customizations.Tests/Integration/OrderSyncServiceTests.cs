@@ -18,7 +18,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Integration
 {
     /// <summary>
-    /// Tests for <see cref="OrderSyncService"/> sync loop and static mapping helper.
+    /// Tests for OrderSyncService sync loop and static mapping helper.
     /// </summary>
     public class OrderSyncServiceTests
     {
@@ -87,7 +87,6 @@ namespace D365.Customizations.Tests.Integration
                 _orders = orders;
             }
 
-            /// <inheritdoc />
             public IList<Entity> GetOrdersCreatedSince(DateTime since) => _orders;
         }
     }

@@ -16,7 +16,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Account
 {
     /// <summary>
-    /// Tests for <see cref="CreateChildContactOnAccountCreate"/> registration behavior against mocks.
+    /// Tests for CreateChildContactOnAccountCreate registration behavior against mocks.
     /// </summary>
     public class CreateChildContactOnAccountCreateTests
     {

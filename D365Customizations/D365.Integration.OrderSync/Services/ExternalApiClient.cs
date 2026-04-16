@@ -16,7 +16,7 @@ using Newtonsoft.Json;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Posts order payloads as JSON to a configured REST endpoint using <see cref="HttpClient"/>.
+    /// Posts order payloads as JSON to a configured REST endpoint using HttpClient.
     /// </summary>
     public class ExternalApiClient : IExternalApiClient
     {
@@ -24,7 +24,7 @@ namespace D365.Integration.OrderSync.Services
         private readonly string _endpoint;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExternalApiClient"/> class.
+        /// Initializes a new instance of the ExternalApiClient class.
         /// </summary>
         /// <param name="httpClient">HTTP client instance (base address optional; <paramref name="endpoint"/> is absolute or relative).</param>
         /// <param name="endpoint">Full URL of the POST resource.</param>
@@ -34,7 +34,6 @@ namespace D365.Integration.OrderSync.Services
             _endpoint = endpoint;
         }
 
-        /// <inheritdoc />
         public async Task<ApiResponse> SendOrderAsync(OrderDetailsPayload payload)
         {
             try

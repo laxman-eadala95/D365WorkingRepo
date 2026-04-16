@@ -10,14 +10,13 @@ using D365.Plugins.Common.Base;
 namespace D365.Customizations.Tests.Helpers
 {
     /// <summary>
-    /// Test double that increments <see cref="CallCount"/> whenever business logic runs.
+    /// Test double that increments CallCount whenever business logic runs.
     /// </summary>
     public class TestPlugin : PluginBase
     {
-        /// <summary>Number of times <see cref="ExecuteBusinessLogic"/> was entered.</summary>
+        /// <summary>Number of times ExecuteBusinessLogic was entered.</summary>
         public int CallCount { get; private set; }
 
-        /// <inheritdoc />
         protected override void ExecuteBusinessLogic(LocalPluginContext localContext)
         {
             CallCount++;

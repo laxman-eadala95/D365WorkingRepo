@@ -20,7 +20,7 @@ namespace D365.Plugins.Common.Base
         /// <summary>Current plugin execution context (stage, message, InputParameters, etc.).</summary>
         public IPluginExecutionContext Context { get; }
 
-        /// <summary>Organization service running as the initiating user (<see cref="IPluginExecutionContext.UserId"/>).</summary>
+        /// <summary>Organization service running as the initiating user (IPluginExecutionContext.UserId).</summary>
         public IOrganizationService Service { get; }
 
         /// <summary>Tracing service for diagnostic output visible in plugin trace logs.</summary>
@@ -30,7 +30,7 @@ namespace D365.Plugins.Common.Base
         public Entity Target { get; }
 
         /// <summary>
-        /// Creates a new context bundle for use inside <see cref="PluginBase.ExecuteBusinessLogic"/>.
+        /// Creates a new context bundle for use inside PluginBase.ExecuteBusinessLogic.
         /// </summary>
         /// <param name="context">Plugin execution context from the platform.</param>
         /// <param name="service">Organization service created for the current user.</param>

@@ -17,7 +17,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Integration
 {
     /// <summary>
-    /// Tests for <see cref="ExternalApiClient"/> success and error status mapping.
+    /// Tests for ExternalApiClient success and error status mapping.
     /// </summary>
     public class ExternalApiClientTests
     {
@@ -53,7 +53,7 @@ namespace D365.Customizations.Tests.Integration
             Assert.Equal(500, result.StatusCode);
         }
 
-        /// <summary>Test handler that returns a canned <see cref="HttpResponseMessage"/> per request.</summary>
+        /// <summary>Test handler that returns a canned HttpResponseMessage per request.</summary>
         private class StubHandler : HttpMessageHandler
         {
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _respond;
@@ -63,7 +63,6 @@ namespace D365.Customizations.Tests.Integration
                 _respond = respond;
             }
 
-            /// <inheritdoc />
             protected override Task<HttpResponseMessage> SendAsync(
                 HttpRequestMessage request, CancellationToken cancellationToken)
             {

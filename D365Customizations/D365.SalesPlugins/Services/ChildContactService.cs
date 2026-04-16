@@ -21,9 +21,9 @@ namespace D365.SalesPlugins.Services
         private readonly ITracingService _tracing;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ChildContactService"/> class.
+        /// Initializes a new instance of the ChildContactService class.
         /// </summary>
-        /// <param name="service">Organization service used to call <see cref="IOrganizationService.Create"/>.</param>
+        /// <param name="service">Organization service used to call IOrganizationService.Create.</param>
         /// <param name="tracing">Tracing service for post-create diagnostics.</param>
         public ChildContactService(IOrganizationService service, ITracingService tracing)
         {
@@ -31,7 +31,6 @@ namespace D365.SalesPlugins.Services
             _tracing = tracing;
         }
 
-        /// <inheritdoc />
         public Guid CreateChildContact(Guid accountId, string accountName)
         {
             var contact = new Entity(ContactConstants.EntityLogicalName)

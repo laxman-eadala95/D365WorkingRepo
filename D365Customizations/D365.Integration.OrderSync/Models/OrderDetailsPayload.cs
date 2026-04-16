@@ -10,7 +10,7 @@ using System;
 namespace D365.Integration.OrderSync.Models
 {
     /// <summary>
-    /// Payload sent to the external order API. Typically produced by <see cref="OrderSyncService.MapToPayload"/>.
+    /// Payload sent to the external order API. Typically produced by OrderSyncService.MapToPayload.
     /// </summary>
     public class OrderDetailsPayload
     {

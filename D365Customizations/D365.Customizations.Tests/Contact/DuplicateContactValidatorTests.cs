@@ -15,7 +15,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Contact
 {
     /// <summary>
-    /// Tests for <see cref="DuplicateContactValidator"/> email existence and exception behavior.
+    /// Tests for DuplicateContactValidator email existence and exception behavior.
     /// </summary>
     public class DuplicateContactValidatorTests
     {

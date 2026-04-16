@@ -16,14 +16,14 @@ using Microsoft.Xrm.Sdk.Query;
 namespace D365.Integration.OrderSync.Services
 {
     /// <summary>
-    /// Retrieves sales orders from Dataverse using <see cref="QueryExpression"/> with a created-on filter.
+    /// Retrieves sales orders from Dataverse using QueryExpression with a created-on filter.
     /// </summary>
     public class OrderRepository : IOrderRepository
     {
         private readonly IOrganizationService _service;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OrderRepository"/> class.
+        /// Initializes a new instance of the OrderRepository class.
         /// </summary>
         /// <param name="service">Authenticated organization service (e.g. <c>ServiceClient</c>).</param>
         public OrderRepository(IOrganizationService service)
@@ -31,7 +31,6 @@ namespace D365.Integration.OrderSync.Services
             _service = service;
         }
 
-        /// <inheritdoc />
         public IList<Entity> GetOrdersCreatedSince(DateTime since)
         {
             var query = new QueryExpression(OrderConstants.EntityLogicalName)

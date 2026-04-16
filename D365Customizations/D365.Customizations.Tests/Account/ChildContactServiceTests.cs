@@ -15,7 +15,7 @@ using Xunit;
 namespace D365.Customizations.Tests.Account
 {
     /// <summary>
-    /// Tests for <see cref="ChildContactService"/> Create behavior and field population.
+    /// Tests for ChildContactService Create behavior and field population.
     /// </summary>
     public class ChildContactServiceTests
     {

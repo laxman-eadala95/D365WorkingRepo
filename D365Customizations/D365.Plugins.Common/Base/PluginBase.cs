@@ -26,8 +26,8 @@ namespace D365.Plugins.Common.Base
         protected virtual int MaxDepth => 4;
 
         /// <summary>
-        /// Plugin pipeline entry. Extracts services from <see cref="IServiceProvider"/>,
-        /// validates depth and <c>InputParameters["Target"]</c>, and calls <see cref="ExecuteBusinessLogic"/>.
+        /// Plugin pipeline entry. Extracts services from IServiceProvider,
+        /// validates depth and InputParameters["Target"], and calls ExecuteBusinessLogic.
         /// </summary>
         /// <param name="serviceProvider">Runtime service provider supplied by the platform.</param>
         public void Execute(IServiceProvider serviceProvider)
@@ -56,7 +56,7 @@ namespace D365.Plugins.Common.Base
         }
 
         /// <summary>
-        /// Implement entity-specific behavior. Called only when Target is a non-null <see cref="Entity"/>.
+        /// Implement entity-specific behavior. Called only when Target is a non-null Entity.
         /// </summary>
         /// <param name="localContext">Bundled context, service, tracing, and Target.</param>
         protected abstract void ExecuteBusinessLogic(LocalPluginContext localContext);
