@@ -72,9 +72,50 @@ namespace D365.Customizations.Tests.Integration
 
             var payload = OrderSyncService.MapToPayload(order);
 
+            Assert.Equal(id, payload.SalesOrderId);
             Assert.Equal("Test", payload.CustomerName);
             Assert.Equal(42m, payload.OrderTotal);
             Assert.Equal(new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc), payload.OrderDate);
+        }
+
+        /// <summary>When Entity.Id is empty, MapToPayload should fall back to the salesorderid attribute.</summary>
+        [Fact]
+        public void MapToPayload_FallsBackToAttribute_WhenEntityIdIsEmpty()
+        {
+            var fallbackId = Guid.NewGuid();
+            var order = new Entity(OrderConstants.EntityLogicalName)
+            {
+                [OrderConstants.AttributeSalesOrderId] = fallbackId,
+                [OrderConstants.AttributeName] = "Fallback",
+                [OrderConstants.AttributeTotalAmount] = new Money(5m),
+                [OrderConstants.AttributeCreatedOn] = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+
+            var payload = OrderSyncService.MapToPayload(order);
+
+            Assert.Equal(fallbackId, payload.SalesOrderId);
+        }
+
+        /// <summary>Failed API call should produce a FAILURE log line with error details.</summary>
+        [Fact]
+        public async Task FailedApiCall_LogsFailure()
+        {
+            var order = new Entity(OrderConstants.EntityLogicalName, Guid.NewGuid())
+            {
+                [OrderConstants.AttributeName] = "SO-FAIL",
+                [OrderConstants.AttributeTotalAmount] = new Money(1m),
+                [OrderConstants.AttributeCreatedOn] = DateTime.UtcNow
+            };
+
+            var repo = new StubOrderRepository(new List<Entity> { order });
+            var api = new MockExternalApiClient(false);
+            var logs = new List<string>();
+
+            var sync = new OrderSyncService(repo, api, logs.Add);
+            await sync.SyncNewOrdersAsync(DateTime.UtcNow.AddDays(-1));
+
+            Assert.Contains("FAILURE", logs[0]);
+            Assert.Contains("Mock failure", logs[0]);
         }
 
         /// <summary>In-memory repository stub returning a fixed list for tests.</summary>

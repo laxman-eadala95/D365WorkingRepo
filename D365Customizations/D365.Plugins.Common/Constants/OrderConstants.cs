@@ -3,7 +3,7 @@
 ** Date: 12-04-2026
 ** Description: Sales Order (salesorder) attribute logical names for OrderSync integration and payload mapping. Refer to following steps
 **     1. Define entity and columns used in QueryExpression and MapToPayload
-**     2. Include createdon filter field and customer lookup where queried
+**     2. Include createdon filter field used in sync window query
 */
 
 namespace D365.Plugins.Common.Constants
@@ -27,8 +27,5 @@ namespace D365.Plugins.Common.Constants
 
         /// <summary>Record created-on timestamp (used as filter and payload order date).</summary>
         public const string AttributeCreatedOn = "createdon";
-
-        /// <summary>Customer lookup (retrieved for potential future use; included in query ColumnSet).</summary>
-        public const string AttributeCustomerId = "customerid";
     }
 }

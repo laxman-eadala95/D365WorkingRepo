@@ -36,6 +36,45 @@ namespace D365.Customizations.Tests.Helpers
         }
 
         /// <summary>
+        /// Creates a mock context where InputParameters["Target"] is set to an arbitrary object (not necessarily an Entity).
+        /// Used to test the PluginBase guard that checks whether Target is actually an Entity.
+        /// </summary>
+        public static PluginMockContext CreateWithRawTarget(object rawTarget, string message, int stage, int depth = 1)
+        {
+            var orgService = new Mock<IOrganizationService>(MockBehavior.Strict);
+            var tracing = new Mock<ITracingService>(MockBehavior.Loose);
+            var context = new Mock<IPluginExecutionContext>(MockBehavior.Strict);
+
+            var inputParams = new ParameterCollection();
+            if (rawTarget != null)
+                inputParams["Target"] = rawTarget;
+
+            context.SetupGet(c => c.MessageName).Returns(message);
+            context.SetupGet(c => c.Stage).Returns(stage);
+            context.SetupGet(c => c.Depth).Returns(depth);
+            context.SetupGet(c => c.UserId).Returns(Guid.NewGuid());
+            context.SetupGet(c => c.PrimaryEntityId).Returns(Guid.NewGuid());
+            context.SetupGet(c => c.InputParameters).Returns(inputParams);
+            context.SetupGet(c => c.OutputParameters).Returns(new ParameterCollection());
+
+            var factory = new Mock<IOrganizationServiceFactory>(MockBehavior.Strict);
+            factory.Setup(f => f.CreateOrganizationService(It.IsAny<Guid?>())).Returns(orgService.Object);
+
+            var provider = new Mock<IServiceProvider>(MockBehavior.Strict);
+            provider.Setup(p => p.GetService(typeof(IPluginExecutionContext))).Returns(context.Object);
+            provider.Setup(p => p.GetService(typeof(ITracingService))).Returns(tracing.Object);
+            provider.Setup(p => p.GetService(typeof(IOrganizationServiceFactory))).Returns(factory.Object);
+
+            return new PluginMockContext
+            {
+                ServiceProvider = provider,
+                OrganizationService = orgService,
+                TracingService = tracing,
+                PluginContext = context
+            };
+        }
+
+        /// <summary>
         /// Creates a fully wired mock context. Optionally sets Target in InputParameters and PrimaryEntityId.
         /// </summary>
         /// <param name="target">Entity for InputParameters["Target"], or null to omit Target.</param>

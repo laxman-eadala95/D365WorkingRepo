@@ -53,6 +53,20 @@ namespace D365.Customizations.Tests.Integration
             Assert.Equal(500, result.StatusCode);
         }
 
+        /// <summary>Network failure should return status 0 with error message instead of throwing.</summary>
+        [Fact]
+        public async Task HttpRequestException_ReturnsFailureWithMessage()
+        {
+            var handler = new StubHandler(_ => throw new HttpRequestException("connection refused"));
+            var client = new ExternalApiClient(new HttpClient(handler), "https://test/api/orders");
+
+            var result = await client.SendOrderAsync(new OrderDetailsPayload());
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.StatusCode);
+            Assert.Contains("connection refused", result.ErrorMessage);
+        }
+
         /// <summary>Test handler that returns a canned HttpResponseMessage per request.</summary>
         private class StubHandler : HttpMessageHandler
         {

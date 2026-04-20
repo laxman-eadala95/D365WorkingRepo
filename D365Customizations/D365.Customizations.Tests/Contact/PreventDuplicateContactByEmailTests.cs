@@ -52,6 +52,21 @@ namespace D365.Customizations.Tests.Contact
                 () => new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object));
         }
 
+        /// <summary>Non-contact target (e.g. account) should skip duplicate validation entirely.</summary>
+        [Fact]
+        public void NonContactTarget_SkipsDuplicateValidation()
+        {
+            var target = new Entity(AccountConstants.EntityLogicalName);
+            target["emailaddress1"] = "test@example.com";
+
+            var mock = PluginMockFactory.Create(target, "Create", 10);
+
+            new PreventDuplicateContactByEmail().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
+        }
+
         /// <summary>
         /// Nested plugin call (depth 2) should skip duplicate validation entirely.
         /// Simulates the scenario where CreateChildContactOnAccountCreate triggers a contact create

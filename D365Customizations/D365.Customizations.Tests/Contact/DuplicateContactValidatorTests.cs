@@ -73,6 +73,30 @@ namespace D365.Customizations.Tests.Contact
             org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
         }
 
+        /// <summary>Empty string email should skip RetrieveMultiple entirely.</summary>
+        [Fact]
+        public void Validate_SkipsCheck_WhenEmailIsEmpty()
+        {
+            var org = new Mock<IOrganizationService>();
+            var validator = new DuplicateContactValidator(org.Object);
+
+            validator.ValidateNoDuplicateEmail("");
+
+            org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
+        }
+
+        /// <summary>Whitespace-only email should skip RetrieveMultiple entirely.</summary>
+        [Fact]
+        public void Validate_SkipsCheck_WhenEmailIsWhitespace()
+        {
+            var org = new Mock<IOrganizationService>();
+            var validator = new DuplicateContactValidator(org.Object);
+
+            validator.ValidateNoDuplicateEmail("   ");
+
+            org.Verify(o => o.RetrieveMultiple(It.IsAny<QueryBase>()), Times.Never);
+        }
+
         /// <summary>Query should limit to one row for performance at scale.</summary>
         [Fact]
         public void Query_UsesTopCountOne_ForPerformance()

@@ -29,6 +29,11 @@ namespace D365.SalesPlugins.Services
             _service = service;
         }
 
+        /// <summary>
+        /// This email check the email existing on Contact entity
+        /// </summary>
+        /// <param name="email">EmailID to check</param>
+        /// <returns>True if email exisits else False</returns>
         public bool EmailExists(string email)
         {
             var query = new QueryExpression(ContactConstants.EntityLogicalName)
@@ -51,6 +56,11 @@ namespace D365.SalesPlugins.Services
             return results.Entities.Count > 0;
         }
 
+        /// <summary>
+        /// Throw duplicate email error. On Default Child Case creation post Account creation the email will be empty. So, skipped the validation
+        /// </summary>
+        /// <param name="email">Email ID to validate</param>
+        /// <exception cref="InvalidPluginExecutionException">Throw email already exists if it is duplicate</exception>
         public void ValidateNoDuplicateEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

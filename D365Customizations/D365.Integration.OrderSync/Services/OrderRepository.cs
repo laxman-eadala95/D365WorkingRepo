@@ -39,8 +39,7 @@ namespace D365.Integration.OrderSync.Services
                     OrderConstants.AttributeSalesOrderId,
                     OrderConstants.AttributeName,
                     OrderConstants.AttributeTotalAmount,
-                    OrderConstants.AttributeCreatedOn,
-                    OrderConstants.AttributeCustomerId),
+                    OrderConstants.AttributeCreatedOn),
                 Criteria = new FilterExpression
                 {
                     Conditions =

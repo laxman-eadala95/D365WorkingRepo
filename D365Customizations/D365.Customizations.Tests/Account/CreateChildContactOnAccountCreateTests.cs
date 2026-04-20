@@ -56,6 +56,36 @@ namespace D365.Customizations.Tests.Account
                 o => o.Create(It.IsAny<Entity>()), Times.Never);
         }
 
+        /// <summary>Non-account target (e.g. contact) should skip child contact creation.</summary>
+        [Fact]
+        public void NonAccountTarget_SkipsChildContactCreation()
+        {
+            var target = new Entity(ContactConstants.EntityLogicalName) { Id = Guid.NewGuid() };
+            target[ContactConstants.AttributeFirstName] = "John";
+
+            var mock = PluginMockFactory.Create(target, "Create", 40);
+
+            new CreateChildContactOnAccountCreate().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.Create(It.IsAny<Entity>()), Times.Never);
+        }
+
+        /// <summary>Empty PrimaryEntityId should skip child contact creation even for valid account.</summary>
+        [Fact]
+        public void EmptyPrimaryEntityId_SkipsChildContactCreation()
+        {
+            var target = new Entity(AccountConstants.EntityLogicalName);
+            target[AccountConstants.AttributeName] = "Fabrikam";
+
+            var mock = PluginMockFactory.Create(target, "Create", 40, primaryEntityId: Guid.Empty);
+
+            new CreateChildContactOnAccountCreate().Execute(mock.ServiceProvider.Object);
+
+            mock.OrganizationService.Verify(
+                o => o.Create(It.IsAny<Entity>()), Times.Never);
+        }
+
         /// <summary>Depth 1 (user-initiated) should still create the child contact normally.</summary>
         [Fact]
         public void DepthOne_CreatesChildContact()

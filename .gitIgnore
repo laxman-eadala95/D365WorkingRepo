@@ -19,5 +19,9 @@ Thumbs.db
 .vs/
 *.swp
 
+# Publish profiles and service dependencies (environment-specific)
+**/PublishProfiles/
+**/serviceDependencies*.json
+
 # MSBuild Binary and Structured Log
 *.binlog

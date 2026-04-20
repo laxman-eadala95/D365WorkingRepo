@@ -43,6 +43,19 @@ namespace D365.Customizations.Tests.Base
             Assert.Equal(0, plugin.CallCount);
         }
 
+        /// <summary>Target present but not an Entity (e.g. EntityReference) should skip business logic.</summary>
+        [Fact]
+        public void NonEntityTarget_SkipsBusinessLogic()
+        {
+            var mock = PluginMockFactory.CreateWithRawTarget(
+                new EntityReference("contact", System.Guid.NewGuid()), "Create", 10);
+
+            var plugin = new TestPlugin();
+            plugin.Execute(mock.ServiceProvider.Object);
+
+            Assert.Equal(0, plugin.CallCount);
+        }
+
         /// <summary>Depth exceeding MaxDepth (default 4) should skip business logic to prevent runaway chains.</summary>
         [Fact]
         public void DepthExceedsMax_SkipsBusinessLogic()
