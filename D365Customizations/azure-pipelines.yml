@@ -1,4 +1,4 @@
-# Skeleton CI/CD for D365 customizations (.NET SDK + MSBuild)
+# CI/CD pipeline for D365 customizations, integration tools, and Azure Functions
 trigger:
   branches:
     include:
@@ -9,31 +9,181 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  solutionPath: 'D365Customizations/D365Customizations.sln'
 
-steps:
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      version: '8.x'
+stages:
+  # ──────────────────────────────────────────────
+  # Stage 1 – Build & Test
+  # ──────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build & Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Restore, Build, Test, Publish Artifacts'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET 8 SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '8.x'
 
-  - script: dotnet restore "D365Customizations/D365.Plugins.Common/D365.Plugins.Common.csproj"
-    displayName: 'dotnet restore (sample)'
+          - script: dotnet restore "$(solutionPath)"
+            displayName: 'Restore all NuGet packages'
 
-  - script: |
-      dotnet build "D365Customizations/D365.Plugins.Common/D365.Plugins.Common.csproj" -c $(buildConfiguration)
-      dotnet build "D365Customizations/CustomPlugins/CustomPlugins.csproj" -c $(buildConfiguration)
-      dotnet build "D365Customizations/D365.Integration.OrderSync/D365.Integration.OrderSync.csproj" -c $(buildConfiguration)
-      dotnet build "D365Customizations/D365.Customizations.Tests/D365.Customizations.Tests.csproj" -c $(buildConfiguration)
-      dotnet build "D365Customizations/OrderMock.Functions/OrderMock.Functions.csproj" -c $(buildConfiguration)
-    displayName: 'dotnet build projects'
+          - script: dotnet build "$(solutionPath)" -c $(buildConfiguration) --no-restore
+            displayName: 'Build entire solution'
 
-  - script: dotnet test "D365Customizations/D365.Customizations.Tests/D365.Customizations.Tests.csproj" -c $(buildConfiguration)
-    displayName: 'dotnet test'
+          - script: >
+              dotnet test
+              "D365Customizations/D365.Customizations.Tests/D365.Customizations.Tests.csproj"
+              -c $(buildConfiguration) --no-build
+              --logger "trx;LogFileName=TestResults.trx"
+              --results-directory "$(Build.ArtifactStagingDirectory)/TestResults"
+            displayName: 'Run unit tests'
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: 'D365Customizations/CustomPlugins/bin/$(buildConfiguration)/net462'
-      ArtifactName: 'CustomPlugins'
-    displayName: 'Publish plugin assembly artifact'
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(Build.ArtifactStagingDirectory)/TestResults/**/*.trx'
+              failTaskOnFailedTests: true
 
-  # Deploy: use `pac auth` + `pac plugin push` or solution import in a manual/environment-gated stage.
+          # D365 SalesPlugins artifact (plugin assembly for Dataverse)
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish D365.SalesPlugins artifact'
+            inputs:
+              PathtoPublish: 'D365Customizations/D365.SalesPlugins/bin/$(buildConfiguration)/net462'
+              ArtifactName: 'D365.SalesPlugins'
+
+          # D365 Plugins Common artifact (shared library)
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish D365.Plugins.Common artifact'
+            inputs:
+              PathtoPublish: 'D365Customizations/D365.Plugins.Common/bin/$(buildConfiguration)/net462'
+              ArtifactName: 'D365.Plugins.Common'
+
+          # Integration OrderSync artifact (console app)
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish D365.Integration.OrderSync artifact'
+            inputs:
+              PathtoPublish: 'D365Customizations/D365.Integration.OrderSync/bin/$(buildConfiguration)/net462'
+              ArtifactName: 'D365.Integration.OrderSync'
+
+          # Azure Functions – must use dotnet publish for self-contained output
+          - script: >
+              dotnet publish
+              "D365Customizations/OrderMock.Functions/OrderMock.Functions.csproj"
+              -c $(buildConfiguration)
+              -o "$(Build.ArtifactStagingDirectory)/OrderMock.Functions"
+            displayName: 'Publish OrderMock.Functions (dotnet publish)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish OrderMock.Functions artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/OrderMock.Functions'
+              ArtifactName: 'OrderMock.Functions'
+
+  # ──────────────────────────────────────────────
+  # Stage 2 – Deploy to D365 (Dev)
+  # ──────────────────────────────────────────────
+  - stage: DeployD365Dev
+    displayName: 'Deploy Plugins to D365 (Dev)'
+    dependsOn: Build
+    condition: succeeded()
+    variables:
+      # Set these in the Azure DevOps pipeline variable group or Library
+      # D365_ENV_URL:     https://yourorg.crm.dynamics.com
+      # D365_APP_ID:      <service-principal-app-id>
+      # D365_CLIENT_SECRET: <service-principal-secret>  (mark as secret)
+      # D365_TENANT_ID:   <azure-ad-tenant-id>
+      d365EnvUrl: '$(D365_ENV_URL)'
+      d365AppId: '$(D365_APP_ID)'
+      d365ClientSecret: '$(D365_CLIENT_SECRET)'
+      d365TenantId: '$(D365_TENANT_ID)'
+    jobs:
+      - deployment: DeployPlugins
+        displayName: 'Register D365 Plugins'
+        environment: 'D365-Dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: PowerPlatformToolInstaller@2
+                  displayName: 'Install Power Platform CLI'
+                  inputs:
+                    DefaultVersion: true
+
+                - task: PowerPlatformSetConnectionVariables@2
+                  displayName: 'Authenticate to Dataverse'
+                  inputs:
+                    authenticationType: 'PowerPlatformSPN'
+                    PowerPlatformSPN: 'D365-Dev-ServiceConnection'
+
+                # Option A: Push plugin assembly directly
+                # Uncomment the section below if you register plugins individually.
+                # - script: |
+                #     pac auth create --url "$(d365EnvUrl)" --applicationId "$(d365AppId)" --clientSecret "$(d365ClientSecret)" --tenant "$(d365TenantId)"
+                #     pac plugin push --assemblyPath "$(Pipeline.Workspace)/D365.SalesPlugins/D365.SalesPlugins.dll"
+                #   displayName: 'Push SalesPlugins assembly to Dataverse'
+
+                # Option B: Import a managed solution (preferred for ALM)
+                # Requires exporting a CRM solution zip as part of the build or from source control.
+                # - task: PowerPlatformImportSolution@2
+                #   displayName: 'Import D365 solution'
+                #   inputs:
+                #     authenticationType: 'PowerPlatformSPN'
+                #     PowerPlatformSPN: 'D365-Dev-ServiceConnection'
+                #     SolutionInputFile: '$(Pipeline.Workspace)/drop/YourSolution_managed.zip'
+                #     AsyncOperation: true
+                #     MaxAsyncWaitTime: '60'
+
+                - script: |
+                    echo "============================================="
+                    echo "  D365 Plugin deployment stage reached."
+                    echo "  Uncomment Option A or Option B above and"
+                    echo "  configure your service connection to enable"
+                    echo "  automated deployment."
+                    echo "============================================="
+                  displayName: 'Deployment placeholder – configure service connection'
+
+  # ──────────────────────────────────────────────
+  # Stage 3 – Deploy Azure Functions (Dev)
+  # ──────────────────────────────────────────────
+  - stage: DeployFunctionsDev
+    displayName: 'Deploy Azure Functions (Dev)'
+    dependsOn: Build
+    condition: succeeded()
+    variables:
+      # Set these in Azure DevOps pipeline variables or Library
+      # AZURE_SUBSCRIPTION:   <Azure service connection name>
+      # FUNCTION_APP_NAME:    <Azure Function App name>
+      azureSubscription: '$(AZURE_SUBSCRIPTION)'
+      functionAppName: '$(FUNCTION_APP_NAME)'
+    jobs:
+      - deployment: DeployFunctions
+        displayName: 'Deploy OrderMock.Functions'
+        environment: 'AzureFunctions-Dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Option: Use AzureFunctionApp@2 task for deployment
+                # Uncomment and configure once the Azure service connection is set up.
+                # - task: AzureFunctionApp@2
+                #   displayName: 'Deploy to Azure Function App'
+                #   inputs:
+                #     azureSubscription: '$(azureSubscription)'
+                #     appType: 'functionApp'
+                #     appName: '$(functionAppName)'
+                #     package: '$(Pipeline.Workspace)/OrderMock.Functions/**'
+                #     runtimeStack: 'DOTNET-ISOLATED|8.0'
+                #     deploymentMethod: 'auto'
+
+                - script: |
+                    echo "============================================="
+                    echo "  Azure Functions deployment stage reached."
+                    echo "  Uncomment the AzureFunctionApp task above"
+                    echo "  and configure your Azure service connection"
+                    echo "  to enable automated deployment."
+                    echo "============================================="
+                  displayName: 'Deployment placeholder – configure Azure service connection'
